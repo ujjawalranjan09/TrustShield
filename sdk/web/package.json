@@ -1,0 +1,13 @@
+{
+  "name": "@trustshield/web-sdk",
+  "version": "1.0.0",
+  "description": "TrustShield fraud detection SDK for web-based payment platforms",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "keywords": ["fraud", "upi", "trustshield", "security", "payments"],
+  "license": "MIT"
+}

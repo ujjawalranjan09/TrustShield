@@ -3,15 +3,18 @@ version: '3.8'
 services:
   api:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://user:pass@postgres:5432/trustshield
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-changeme_in_production}@postgres:5432/${POSTGRES_DB:-trustshield}
       - REDIS_URL=redis://redis:6379/0
       - NEO4J_URI=bolt://neo4j:7687
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - TRUSTSHIELD_API_KEY=${TRUSTSHIELD_API_KEY:-}
+    env_file:
+      - .env
     depends_on:
       - postgres
       - redis
@@ -20,9 +23,11 @@ services:
 
   worker:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     command: celery -A app.workers.celery_app worker -l info
+    env_file:
+      - .env
     depends_on:
       - redis
       - postgres
@@ -30,18 +35,20 @@ services:
 
   beat:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     command: celery -A app.workers.celery_app beat -l info
+    env_file:
+      - .env
     depends_on:
       - redis
 
   postgres:
     image: ankane/pgvector:v0.5.1
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-      - POSTGRES_DB=trustshield
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme_in_production}
+      - POSTGRES_DB=${POSTGRES_DB:-trustshield}
     ports:
       - "5432:5432"
     volumes:
@@ -50,7 +57,7 @@ services:
   neo4j:
     image: neo4j:5.11
     environment:
-      - NEO4J_AUTH=neo4j/password
+      - NEO4J_AUTH=${NEO4J_AUTH:-neo4j/changeme_in_production}
       - NEO4J_apoc_export_file_enabled=true
       - NEO4J_apoc_import_file_enabled=true
       - NEO4J_apoc_import_file_use__neo4j__config=true
@@ -89,8 +96,8 @@ services:
     image: minio/minio
     command: server /data --console-address ":9001"
     environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=password
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-changeme_in_production}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -99,7 +106,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
     ports:
       - "3000:3000"
     environment:

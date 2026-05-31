@@ -1,9 +1,20 @@
-import unicodedata
+"""Text preprocessor module.
+
+Normalizes and cleans raw chat text before entity extraction and
+classification. Handles Unicode normalization, zero-width character
+removal, abbreviation expansion, and truncation.
+"""
+
 import re
+import unicodedata
+from typing import Dict
+
 
 class TextPreprocessor:
-    def __init__(self):
-        self.abbreviations = {
+    """Clean and normalize chat text for downstream NLP processing."""
+
+    def __init__(self) -> None:
+        self.abbreviations: Dict[str, str] = {
             "plz": "please",
             "aap": "aap",
             "thx": "thanks",
@@ -12,32 +23,45 @@ class TextPreprocessor:
         }
 
     def clean(self, text: str) -> str:
-        # Normalize unicode characters
-        text = unicodedata.normalize('NFKD', text)
+        """Normalize, clean, and truncate text.
 
-        # Strip zero-width spaces and invisible characters
-        text = re.sub(r'[\u200B-\u200D\uFEFF]', '', text)
+        Args:
+            text: Raw chat text.
 
-        # Expand common Hindi SMS abbreviations
+        Returns:
+            Cleaned text with normalized unicode, no zero-width characters,
+            expanded abbreviations, and max 512 tokens.
+        """
+        text = unicodedata.normalize("NFKD", text)
+        text = re.sub(r"[\u200B-\u200D\uFEFF]", "", text)
+
         words = text.split()
         expanded_words = [self.abbreviations.get(word.lower(), word) for word in words]
-        text = ' '.join(expanded_words)
+        text = " ".join(expanded_words)
 
-        # Remove duplicate whitespace
-        text = re.sub(r'\s+', ' ', text).strip()
+        text = re.sub(r"\s+", " ", text).strip()
 
-        # Truncate to 512 tokens (roughly words for simple implementation)
         tokens = text.split()
         if len(tokens) > 512:
             tokens = tokens[:512]
-            text = ' '.join(tokens)
+            text = " ".join(tokens)
 
         return text
 
     def detect_language(self, text: str) -> str:
-        # A very basic language detection mock
-        hindi_keywords = ['aap', 'hai', 'karo', 'bhai', 'batao', 'kya']
-        english_keywords = ['the', 'is', 'please', 'help', 'share']
+        """Detect the primary language of the text.
+
+        Uses a simple keyword-based heuristic. Returns one of:
+        'en', 'hi', 'hinglish', or 'mixed'.
+
+        Args:
+            text: Cleaned chat text.
+
+        Returns:
+            Language code string.
+        """
+        hindi_keywords = {"aap", "hai", "karo", "bhai", "batao", "kya"}
+        english_keywords = {"the", "is", "please", "help", "share"}
 
         text_lower = text.lower()
         has_hindi = any(word in text_lower for word in hindi_keywords)
@@ -50,5 +74,4 @@ class TextPreprocessor:
         elif has_english:
             return "en"
         else:
-            # Default to mixed or hingeish for unknown
             return "hinglish"

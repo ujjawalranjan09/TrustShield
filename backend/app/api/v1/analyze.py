@@ -1,101 +1,329 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional
-import time
+"""Chat analysis and webhook endpoints.
 
+Provides the core fraud detection API: POST /analyze for real-time chat
+analysis, and POST /webhook/pre-transaction for bank-side transaction
+pre-screening.
+"""
+
+import logging
+import time
+from datetime import datetime, timezone
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
+
+from app.auth import verify_api_key
 from app.schemas.entity import ExtractedEntity
-from app.schemas.risk import RiskLevel, ActionCode
-from app.services.nlp.preprocessor import TextPreprocessor
-from app.services.nlp.entity_extractor import EntityExtractor
-from app.services.nlp.classifier import ScamClassifier
-from app.services.nlp.risk_scorer import RiskScorer, SessionContext
+from app.schemas.risk import ActionCode, RiskLevel
 from app.services.intervention.action_engine import ActionEngine, GraphEnrichment
+from app.services.nlp.classifier import ScamClassifier
+from app.services.nlp.entity_extractor import EntityExtractor
+from app.services.nlp.preprocessor import TextPreprocessor
+from app.services.nlp.risk_scorer import RiskScorer, SessionContext
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
+# ---------------------------------------------------------------------------
+# Request / Response schemas
+# ---------------------------------------------------------------------------
+
+
 class ChatMessage(BaseModel):
-    sender: str
-    text: str
+    """A single chat message in the session."""
+
+    sender: str = Field(..., min_length=1, max_length=50)
+    text: str = Field(..., min_length=1, max_length=5000)
+
 
 class SessionMetadata(BaseModel):
-    client_app_id: str
-    session_id: str
-    contact_initiated_by: str
+    """Metadata about the client session."""
+
+    client_app_id: str = Field(..., min_length=1, max_length=100)
+    session_id: str = Field(..., min_length=1, max_length=100)
+    contact_initiated_by: str = Field(..., min_length=1, max_length=50)
     is_during_active_upi_session: bool
-    user_device_hash: str
-    prior_reports_for_sender: int = 0
+    user_device_hash: str = Field(..., min_length=1, max_length=256)
+    prior_reports_for_sender: int = Field(default=0, ge=0, le=1000)
+    session_started_at: Optional[datetime] = Field(
+        default=None,
+        description="ISO-8601 timestamp of session start. Used to compute time_since_session_start.",
+    )
+
 
 class AnalyzeRequest(BaseModel):
-    messages: List[ChatMessage]
+    """Full chat analysis request payload."""
+
+    messages: List[ChatMessage] = Field(..., min_length=1)
     session_metadata: SessionMetadata
 
+
 class AnalyzeResponse(BaseModel):
+    """Chat analysis result."""
+
     session_id: str
     risk_score: int
     risk_level: RiskLevel
     recommended_action: ActionCode
     flagged_entities: List[ExtractedEntity]
-    warning_message_en: Optional[str]
-    warning_message_hi: Optional[str]
+    warning_message_en: Optional[str] = None
+    warning_message_hi: Optional[str] = None
     intervention_type: str
 
-# Instantiate services
-preprocessor = TextPreprocessor()
-extractor = EntityExtractor()
-classifier = ScamClassifier()
-scorer = RiskScorer()
-action_engine = ActionEngine()
 
-@router.post("/analyze", response_model=AnalyzeResponse)
-async def analyze_chat(request: AnalyzeRequest):
+class WebhookRequest(BaseModel):
+    """Pre-transaction webhook payload from banks."""
+
+    payer_vpa: str = Field(..., min_length=1)
+    payee_vpa: str = Field(..., min_length=1)
+    amount: float = Field(..., gt=0)
+    device_fingerprint: Optional[str] = None
+    geo_location: Optional[dict] = None
+    timestamp: Optional[str] = None
+
+
+class WebhookResponse(BaseModel):
+    """Pre-transaction decision."""
+
+    decision: str
+    reason: str
+    risk_score: int
+    risk_level: str
+
+
+class ErrorResponse(BaseModel):
+    """Structured error response."""
+
+    error: str
+    detail: str
+    status_code: int
+
+
+# ---------------------------------------------------------------------------
+# Service dependencies (via FastAPI Depends)
+# ---------------------------------------------------------------------------
+
+
+def get_preprocessor() -> TextPreprocessor:
+    """Return a TextPreprocessor instance."""
+    return TextPreprocessor()
+
+
+def get_extractor() -> EntityExtractor:
+    """Return an EntityExtractor instance."""
+    return EntityExtractor()
+
+
+def get_classifier() -> ScamClassifier:
+    """Return a ScamClassifier instance."""
+    return ScamClassifier()
+
+
+def get_scorer() -> RiskScorer:
+    """Return a RiskScorer instance."""
+    return RiskScorer()
+
+
+def get_action_engine() -> ActionEngine:
+    """Return an ActionEngine instance."""
+    return ActionEngine()
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/analyze",
+    response_model=AnalyzeResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request payload"},
+        422: {"model": ErrorResponse, "description": "Validation error"},
+        429: {"model": ErrorResponse, "description": "Rate limit exceeded"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def analyze_chat(
+    request: AnalyzeRequest,
+    _: bool = Depends(verify_api_key),
+    preprocessor: TextPreprocessor = Depends(get_preprocessor),
+    extractor: EntityExtractor = Depends(get_extractor),
+    classifier: ScamClassifier = Depends(get_classifier),
+    scorer: RiskScorer = Depends(get_scorer),
+    action_engine: ActionEngine = Depends(get_action_engine),
+) -> AnalyzeResponse:
+    """Analyze a chat session for fraud indicators.
+
+    Runs the full NLP pipeline: preprocessing → entity extraction →
+    classification → risk scoring → graph enrichment → intervention decision.
+    Target latency: <300ms.
+    """
     start_time = time.time()
 
-    # 1. Preprocess and concatenate messages
-    full_text = " ".join([msg.text for msg in request.messages])
-    cleaned_text = preprocessor.clean(full_text)
+    try:
+        # 1. Preprocess and concatenate messages
+        full_text = " ".join(msg.text for msg in request.messages)
+        cleaned_text = preprocessor.clean(full_text)
 
-    # 2. Extract Entities
-    entities = extractor.extract(cleaned_text)
+        # 2. Extract entities
+        entities = extractor.extract(cleaned_text)
 
-    # 3. Classify text
-    classification_result = await classifier.classify(cleaned_text)
+        # 3. Classify text
+        classification_result = await classifier.classify(cleaned_text)
 
-    # 4. Risk Scoring
-    context = SessionContext(
-        classifier_output=classification_result,
-        extracted_entities=entities,
-        contact_initiated_by=request.session_metadata.contact_initiated_by,
-        time_since_session_start=len(request.messages) * 10, # Mock time
-        number_of_messages=len(request.messages),
-        is_during_active_upi_session=request.session_metadata.is_during_active_upi_session,
-        prior_reports_for_sender=request.session_metadata.prior_reports_for_sender
-    )
-    base_risk = scorer.score(context)
+        # 4. Compute session duration from timestamps
+        if request.session_metadata.session_started_at:
+            now = datetime.now(timezone.utc)
+            session_start = request.session_metadata.session_started_at
+            if session_start.tzinfo is None:
+                session_start = session_start.replace(tzinfo=timezone.utc)
+            time_since_start = int((now - session_start).total_seconds())
+        else:
+            # Fallback: estimate from message count (avg 10s per message)
+            time_since_start = len(request.messages) * 10
 
-    # 5. Graph Enrichment (Mocked)
-    graph_enrichment = GraphEnrichment(
-        graph_risk_score=0.2 if any(e.entity_type.value == "PHONE" for e in entities) else 0.0,
-        connected_blacklisted_entities=0
-    )
+        # 5. Risk scoring
+        context = SessionContext(
+            classifier_output=classification_result,
+            extracted_entities=entities,
+            contact_initiated_by=request.session_metadata.contact_initiated_by,
+            time_since_session_start=time_since_start,
+            number_of_messages=len(request.messages),
+            is_during_active_upi_session=request.session_metadata.is_during_active_upi_session,
+            prior_reports_for_sender=request.session_metadata.prior_reports_for_sender,
+        )
+        base_risk = scorer.score(context)
 
-    # 6. Action Engine
-    decision = action_engine.decide(base_risk, graph_enrichment)
+        # 6. Graph enrichment (mocked)
+        graph_enrichment = GraphEnrichment(
+            graph_risk_score=0.2
+            if any(e.entity_type.value == "PHONE" for e in entities)
+            else 0.0,
+            connected_blacklisted_entities=0,
+        )
 
-    # 7. Simulated DB writes & Kafka emit
-    # (Mocked: store session, write entities to Neo4j, emit Kafka event)
+        # 7. Action engine
+        decision = action_engine.decide(base_risk, graph_enrichment)
 
-    processing_time = time.time() - start_time
-    if processing_time > 0.3:
-        # We missed 300ms SLA, log it
-        print(f"SLA MISSED: Processing took {processing_time * 1000}ms")
+        # 8. SLA check
+        processing_time = time.time() - start_time
+        if processing_time > 0.3:
+            logger.warning(
+                "SLA MISSED: Processing took %.1fms for session %s",
+                processing_time * 1000,
+                request.session_metadata.session_id,
+            )
 
-    return AnalyzeResponse(
-        session_id=request.session_metadata.session_id,
-        risk_score=base_risk.score,
-        risk_level=base_risk.level,
-        recommended_action=decision.action,
-        flagged_entities=entities,
-        warning_message_en=decision.warning_message_en,
-        warning_message_hi=decision.warning_message_hi,
-        intervention_type=decision.action.value
-    )
+        logger.info(
+            "Analyzed session %s: score=%d level=%s action=%s entities=%d (%.1fms)",
+            request.session_metadata.session_id,
+            base_risk.score,
+            base_risk.level.value,
+            decision.action.value,
+            len(entities),
+            processing_time * 1000,
+        )
+
+        return AnalyzeResponse(
+            session_id=request.session_metadata.session_id,
+            risk_score=base_risk.score,
+            risk_level=base_risk.level,
+            recommended_action=decision.action,
+            flagged_entities=entities,
+            warning_message_en=decision.warning_message_en,
+            warning_message_hi=decision.warning_message_hi,
+            intervention_type=decision.action.value,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error analyzing chat session: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error during analysis",
+        )
+
+
+@router.post(
+    "/webhook/pre-transaction",
+    response_model=WebhookResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request payload"},
+        429: {"model": ErrorResponse, "description": "Rate limit exceeded"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def webhook_pre_transaction(
+    request: WebhookRequest,
+    _: bool = Depends(verify_api_key),
+) -> WebhookResponse:
+    """Webhook endpoint for banks to check transactions before processing.
+
+    Evaluates transaction parameters against fraud rules and returns a
+    PASS / REVIEW / BLOCK decision within 100ms. All decisions are
+    logged for audit trail purposes.
+    """
+    try:
+        risk_score = 0
+        reasons: List[str] = []
+
+        if request.amount > 50000:
+            risk_score += 30
+            reasons.append("High transaction amount")
+
+        if request.payer_vpa == request.payee_vpa:
+            risk_score += 50
+            reasons.append("Self-transfer detected")
+
+        if request.device_fingerprint and len(request.device_fingerprint) > 0:
+            risk_score += 10
+            reasons.append("Device fingerprint present")
+
+        # Check for geo_location anomalies (if provided)
+        if request.geo_location:
+            risk_score += 5
+            reasons.append("Geo-location data present")
+
+        if risk_score >= 70:
+            decision = "BLOCK"
+            risk_level = "critical"
+        elif risk_score >= 40:
+            decision = "REVIEW"
+            risk_level = "high"
+        elif risk_score >= 20:
+            decision = "REVIEW"
+            risk_level = "medium"
+        else:
+            decision = "PASS"
+            risk_level = "low"
+
+        # Structured audit log for compliance
+        logger.info(
+            "WEBHOOK_AUDIT decision=%s score=%d level=%s payer=%s payee=%s amount=%.2f reasons=%s",
+            decision,
+            risk_score,
+            risk_level,
+            request.payer_vpa,
+            request.payee_vpa,
+            request.amount,
+            "; ".join(reasons) if reasons else "none",
+        )
+
+        return WebhookResponse(
+            decision=decision,
+            reason="; ".join(reasons) if reasons else "No risk factors detected",
+            risk_score=risk_score,
+            risk_level=risk_level,
+        )
+
+    except Exception as e:
+        logger.error("Error processing webhook: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error in webhook processing",
+        )

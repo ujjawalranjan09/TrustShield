@@ -9,7 +9,9 @@ celery_app = Celery(
 
 celery_app.conf.beat_schedule = {
     "propagate-risk-every-6-hours": {
-        "task": "app.services.graph.risk_propagation.propagate_task",
-        "schedule": 21600.0, # 6 hours
+        "task": "app.services.graph.risk_propagation.propagate_risk_scores",
+        "schedule": 21600.0,  # 6 hours in seconds
     },
 }
+
+celery_app.conf.timezone = "Asia/Kolkata"

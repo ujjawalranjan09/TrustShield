@@ -38,6 +38,7 @@ venv.bak/
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # Logs
 *.log
@@ -47,6 +48,7 @@ logs/
 .env
 .env.local
 .env.*.local
+infra/.env
 
 # Database
 *.db
