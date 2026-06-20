@@ -80,6 +80,9 @@ out/
 build/
 frontend/tsconfig.tsbuildinfo
 
+# Git worktrees
+.worktrees/
+
 # SDK
 *.apk
 *.aab
