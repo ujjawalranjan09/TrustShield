@@ -4,7 +4,7 @@ EntityReport stores individual report submissions. FlaggedEntity tracks
 the aggregated state of each reported entity (total reports, risk level).
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy import Column, Float, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from app.database import Base
@@ -21,9 +21,16 @@ class FlaggedEntity(Base):
     scam_type = Column(String(100))
     description = Column(Text)
     report_count = Column(Integer, default=1, nullable=False)
-    is_confirmed = Column(Integer, default=0)  # 1 when report_count >= 3
+    is_confirmed = Column(Integer, default=0)
     first_reported = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_seen = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    source = Column(String(50), default="user_report")  # user_report, threat_intel, cross_bank
+
+    # Geo columns (populated when available from reporter/device)
+    region = Column(String(100), nullable=True)
+    pincode = Column(String(10), nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     reports = relationship(
         "EntityReport", back_populates="entity", cascade="all, delete-orphan"

@@ -45,6 +45,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [feed, setFeed] = useState<FeedEvent[]>([]);
   const [apiConnected, setApiConnected] = useState<boolean | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Check API health on mount
   useEffect(() => {
@@ -53,39 +54,108 @@ export default function Dashboard() {
       .catch(() => setApiConnected(false));
   }, []);
 
-  // Load initial stats from report API
+  // Load initial stats from analytics API
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const reportStats = await apiClient.getReportStats();
-        setStats({
-          scansToday: 145023,
-          flaggedSessions: 1204,
-          entitiesBlacklisted: reportStats.total_entities_reported || 89,
-          falsePositiveRate: 1.2,
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const res = await fetch(`${apiUrl}/api/v1/analytics/dashboard`, {
+          headers: { 'X-API-Key': localStorage.getItem('trustshield_api_key') || '' },
         });
+        if (!res.ok) throw new Error('API unavailable');
+        const data = await res.json();
+        setStats({
+          scansToday: data.total_scans_today || 0,
+          flaggedSessions: data.flagged_sessions || 0,
+          entitiesBlacklisted: data.entities_blacklisted || 0,
+          falsePositiveRate: data.false_positive_rate || 0,
+        });
+        setIsDemoMode(false);
       } catch {
         setStats({
-          scansToday: 145023,
-          flaggedSessions: 1204,
-          entitiesBlacklisted: 89,
-          falsePositiveRate: 1.2,
+          scansToday: 0,
+          flaggedSessions: 0,
+          entitiesBlacklisted: 0,
+          falsePositiveRate: 0,
         });
+        setIsDemoMode(true);
       }
     };
     loadStats();
   }, []);
 
-  // Live feed
+  // Live feed — try WebSocket first, fall back to mock
   useEffect(() => {
+    const wsUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
+      .replace('http', 'ws') + '/api/v1/ws/dashboard';
+
+    let ws: WebSocket | null = null;
+    let useMock = false;
+    let mockInterval: ReturnType<typeof setInterval> | null = null;
+
     const initial: FeedEvent[] = Array.from({ length: 8 }, () => getRandomEvent()).reverse();
     setFeed(initial);
 
-    const interval = setInterval(() => {
-      setFeed((prev) => [getRandomEvent(), ...prev].slice(0, 50));
-    }, 2200);
+    try {
+      ws = new WebSocket(wsUrl);
 
-    return () => clearInterval(interval);
+      ws.onopen = () => {
+        console.log('Dashboard WebSocket connected');
+      };
+
+      ws.onmessage = (msg) => {
+        try {
+          const data = JSON.parse(msg.data);
+          if (data.type === 'fraud_event') {
+            const event: FeedEvent = {
+              id: Date.now() + Math.random(),
+              type: data.entities?.[0] || data.risk_level,
+              action: data.action,
+              message: `Session ${data.session_id}: ${data.risk_level} risk (${data.risk_score}/100) — ${data.entities?.join(', ') || 'no entities'}`,
+              risk: data.risk_level?.toLowerCase() || 'medium',
+              time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+            };
+            setFeed((prev) => [event, ...prev].slice(0, 50));
+          }
+        } catch { /* ignore parse errors */ }
+      };
+
+      ws.onerror = () => {
+        useMock = true;
+        startMockFeed();
+      };
+
+      ws.onclose = () => {
+        if (!useMock) {
+          useMock = true;
+          startMockFeed();
+        }
+      };
+    } catch {
+      useMock = true;
+      startMockFeed();
+    }
+
+    function startMockFeed() {
+      if (mockInterval) return;
+      mockInterval = setInterval(() => {
+        setFeed((prev) => [getRandomEvent(), ...prev].slice(0, 50));
+      }, 2200);
+    }
+
+    // Fallback: if WS doesn't connect within 2s, start mock feed
+    const fallbackTimer = setTimeout(() => {
+      if (!useMock && ws?.readyState !== WebSocket.OPEN) {
+        useMock = true;
+        startMockFeed();
+      }
+    }, 2000);
+
+    return () => {
+      clearTimeout(fallbackTimer);
+      ws?.close();
+      if (mockInterval) clearInterval(mockInterval);
+    };
   }, []);
 
   const isLoading = stats === null;
@@ -112,6 +182,9 @@ export default function Dashboard() {
             <a href="/dashboard/explainability" className="text-sm text-accent-purple hover:text-accent-purple/80 transition-colors">
               Explainability
             </a>
+            <a href="/dashboard/billing" className="text-sm text-info hover:text-info/80 transition-colors">
+              Billing
+            </a>
             <div className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 ${
               apiConnected === true
                 ? 'bg-success/10 border border-success/20'
@@ -128,6 +201,12 @@ export default function Dashboard() {
                 {apiConnected === true ? 'API Connected' : apiConnected === false ? 'API Offline' : 'Checking...'}
               </span>
             </div>
+            {isDemoMode && (
+              <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-warning/10 border border-warning/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-warning" />
+                <span className="text-xs font-medium text-warning">Demo Mode</span>
+              </div>
+            )}
             <div className="h-8 w-8 rounded-full bg-surface-lighter flex items-center justify-center text-xs font-bold text-slate-400 border border-surface-lighter">
               AD
             </div>

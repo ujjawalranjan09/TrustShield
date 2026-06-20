@@ -19,8 +19,26 @@ from app.config import DATABASE_URL
 from app.database import Base
 
 # Import all models so Base.metadata knows about them
-from app.models.session import FraudSession, RiskEvent  # noqa: F401
-from app.models.entity import FlaggedEntity  # noqa: F401
+from app.models.session import RevokedSession  # noqa: F401
+from app.models.entity import FlaggedEntity, EntityReport  # noqa: F401
+from app.models.user import User  # noqa: F401
+from app.models.intel import Bank, SharedEntity, CrossBankReport  # noqa: F401
+from app.models.recovery import RecoveryCase  # noqa: F401
+from app.models.scan_event import ScanEvent  # noqa: F401
+from app.models.audit import AuditLog  # noqa: F401
+from app.models.feedback import FeedbackLabel  # noqa: F401
+from app.models.refresh_token import RefreshToken  # noqa: F401
+from app.models.model_params import ModelParams  # noqa: F401
+from app.models.drift import DriftLog  # noqa: F401
+from app.models.ring import FraudRing  # noqa: F401
+from app.models.investigation import InvestigationCase  # noqa: F401
+from app.models.behavioral_signal import BehavioralSignal  # noqa: F401
+from app.models.intervention import InterventionLog  # noqa: F401
+from app.models.billing import Plan, Subscription, UsageLedger, UsageEvent  # noqa: F401
+from app.models.shadow_prediction import ShadowPrediction  # noqa: F401
+from app.models.compliance import DataAsset  # noqa: F401
+from app.models.tenant import Tenant  # noqa: F401
+from app.models.auth import Role, UserRole  # noqa: F401
 
 # Alembic Config object
 config = context.config

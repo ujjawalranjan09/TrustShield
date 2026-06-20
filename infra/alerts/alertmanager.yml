@@ -1,0 +1,45 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: [alertname, environment]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - match:
+        severity: critical
+      receiver: critical-pagerduty
+      group_wait: 10s
+      repeat_interval: 1h
+    - match:
+        severity: warning
+      receiver: ops-slack
+
+receivers:
+  - name: default
+    webhook_configs:
+      - url: "http://localhost:9095/alert"
+
+  - name: critical-pagerduty
+    pagerduty_configs:
+      - service_key: "<pagerduty-routing-key>"
+        description: "{{ .GroupLabels.alertname }}"
+        severity: "{{ .CommonLabels.severity }}"
+
+  - name: ops-slack
+    slack_configs:
+      - api_url: "<slack-webhook-url>"
+        channel: "#trustshield-ops"
+        title: "{{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+        send_resolved: true
+
+  - name: incidents-slack
+    slack_configs:
+      - api_url: "<slack-webhook-url>"
+        channel: "#trustshield-incidents"
+        title: "{{ .GroupLabels.alertname }}"
+        text: "{{ .CommonAnnotations.description }}"
+        send_resolved: true

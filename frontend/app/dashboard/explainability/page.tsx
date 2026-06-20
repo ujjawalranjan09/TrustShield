@@ -50,28 +50,34 @@ function RiskPieChart({ data }: { data: DashboardStats['risk_distribution'] }) {
     <div className="rounded-xl border border-surface-light bg-surface p-5">
       <h3 className="text-sm font-semibold text-slate-300 mb-4">Risk Distribution</h3>
       <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={90}
-              paddingAngle={3}
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-              itemStyle={{ color: '#e2e8f0' }}
-            />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+        {chartData.length === 0 ? (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-slate-500">No risk data available</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={90}
+                paddingAngle={3}
+                dataKey="value"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                itemStyle={{ color: '#e2e8f0' }}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
@@ -82,27 +88,33 @@ function ScamTypeBarChart({ data }: { data: DashboardStats['scam_type_breakdown'
     <div className="rounded-xl border border-surface-light bg-surface p-5">
       <h3 className="text-sm font-semibold text-slate-300 mb-4">Scam Type Breakdown</h3>
       <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ left: 100 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-            <XAxis type="number" tick={{ fill: '#64748b', fontSize: 11 }} />
-            <YAxis
-              type="category"
-              dataKey="scam_type"
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
-              width={100}
-            />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-              itemStyle={{ color: '#e2e8f0' }}
-            />
-            <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-              {data.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={SCAM_TYPE_COLORS[index % SCAM_TYPE_COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        {data.length === 0 ? (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-slate-500">No scam data available</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} layout="vertical" margin={{ left: 100 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis type="number" tick={{ fill: '#64748b', fontSize: 11 }} />
+              <YAxis
+                type="category"
+                dataKey="scam_type"
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                width={100}
+              />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                itemStyle={{ color: '#e2e8f0' }}
+              />
+              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                {data.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={SCAM_TYPE_COLORS[index % SCAM_TYPE_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
@@ -113,30 +125,36 @@ function TemporalTrendChart({ data }: { data: DashboardStats['temporal_trend'] }
     <div className="rounded-xl border border-surface-light bg-surface p-5">
       <h3 className="text-sm font-semibold text-slate-300 mb-4">7-Day Reporting Trend</h3>
       <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gradientReports" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gradientConfirmed" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-            <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-              itemStyle={{ color: '#e2e8f0' }}
-            />
-            <Legend />
-            <Area type="monotone" dataKey="reports" stroke="#3b82f6" strokeWidth={2} fill="url(#gradientReports)" name="Reports" />
-            <Area type="monotone" dataKey="confirmed" stroke="#ef4444" strokeWidth={2} fill="url(#gradientConfirmed)" name="Confirmed" />
-          </AreaChart>
-        </ResponsiveContainer>
+        {data.length === 0 ? (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-slate-500">No trend data available</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradientReports" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradientConfirmed" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                itemStyle={{ color: '#e2e8f0' }}
+              />
+              <Legend />
+              <Area type="monotone" dataKey="reports" stroke="#3b82f6" strokeWidth={2} fill="url(#gradientReports)" name="Reports" />
+              <Area type="monotone" dataKey="confirmed" stroke="#ef4444" strokeWidth={2} fill="url(#gradientConfirmed)" name="Confirmed" />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
@@ -146,19 +164,25 @@ function ContributingFactorsTable({ factors }: { factors: DashboardStats['contri
   return (
     <div className="rounded-xl border border-surface-light bg-surface p-5">
       <h3 className="text-sm font-semibold text-slate-300 mb-4">Risk Scoring Factors</h3>
-      <div className="space-y-3">
-        {factors.map((f, i) => (
-          <div key={i} className="flex items-start gap-3 p-3 bg-surface-light/50 rounded-lg">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-info/20 text-info text-sm font-bold shrink-0">
-              {Math.round(f.weight * 100)}%
+      {factors.length === 0 ? (
+        <div className="flex h-40 items-center justify-center">
+          <p className="text-sm text-slate-500">No factors available</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {factors.map((f, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 bg-surface-light/50 rounded-lg">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-info/20 text-info text-sm font-bold shrink-0">
+                {Math.round(f.weight * 100)}%
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">{f.factor}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{f.description}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-white">{f.factor}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{f.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

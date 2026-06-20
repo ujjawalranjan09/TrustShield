@@ -1,0 +1,48 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "title": "Audit Chain Breaks",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "audit_chain_break_total",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 1, "color": "red" }] } }
+      }
+    },
+    {
+      "title": "Nightly Job Success",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "celery_task_success_total",
+          "legendFormat": "{{task}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Dead-Letter Queue Depth",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "celery_deadletter_depth",
+          "legendFormat": "{{task}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 1, "color": "red" }] } }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["trustshield", "compliance"],
+  "title": "TrustShield Compliance",
+  "uid": "trustshield-compliance"
+}

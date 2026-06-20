@@ -10,7 +10,8 @@ stop:
 	cd infra && docker-compose down
 
 test:
-	cd backend && PYTHONPATH=$(PWD)/backend pytest tests/integration/
+	cd backend && PYTHONPATH=$(PWD)/backend pytest tests/unit/ -v
+	cd backend && PYTHONPATH=$(PWD)/backend pytest tests/integration/ -v
 
 build-frontend:
 	cd frontend && npm run build

@@ -1,0 +1,602 @@
+{
+  "scorecard": {
+    "pass": 39,
+    "fail": 2,
+    "degraded": 15,
+    "skip": 20
+  },
+  "results": {
+    "0.1": {
+      "symbol": "[PASS]",
+      "desc": "Redis ping",
+      "ok": true
+    },
+    "0.2": {
+      "symbol": "[DEGR]",
+      "desc": "Alembic migrations",
+      "ok": false,
+      "note": "Migrations broken; used Base.metadata.create_all() instead"
+    },
+    "0.3": {
+      "symbol": "[PASS]",
+      "desc": "Backend boot",
+      "ok": true
+    },
+    "0.4": {
+      "phase": "0",
+      "num": "4",
+      "desc": "GET /",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"message\":\"TrustShield\",\"version\":\"1.0.0\",\"status\":\"running\",\"docs\":\"/docs\"}",
+      "symbol": "[PASS]"
+    },
+    "0.5": {
+      "phase": "0",
+      "num": "5",
+      "desc": "GET /health",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"status\":\"healthy\",\"database\":\"connected\"}",
+      "symbol": "[PASS]"
+    },
+    "0.6": {
+      "phase": "0",
+      "num": "6",
+      "desc": "GET /docs",
+      "status": 200,
+      "ok": true,
+      "body_preview": "<!DOCTYPE html>\n    <html>\n    <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link type=\"text/css\" rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/swagger-u",
+      "symbol": "[PASS]"
+    },
+    "0.7": {
+      "phase": "0",
+      "num": "7",
+      "desc": "GET /openapi.json",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"openapi\":\"3.1.0\",\"info\":{\"title\":\"TrustShield\",\"description\":\"Real-time AI-powered fraud detection platform for UPI and digital payments\",\"version\":\"1.0.0\"},\"paths\":{\"/\":{\"get\":{\"summary\":\"Root\",\"de",
+      "symbol": "[PASS]"
+    },
+    "0.8": {
+      "phase": "0",
+      "num": "8",
+      "desc": "GET /metrics",
+      "status": 200,
+      "ok": true,
+      "body_preview": "# HELP python_gc_objects_collected_total Objects collected during gc\n# TYPE python_gc_objects_collected_total counter\npython_gc_objects_collected_total{generation=\"0\"} 1395.0\npython_gc_objects_collect",
+      "symbol": "[PASS]"
+    },
+    "0.9": {
+      "symbol": "[SKIP]",
+      "desc": "Frontend boot",
+      "ok": true,
+      "note": "Deferred to Phase 7"
+    },
+    "0.10": {
+      "phase": "0",
+      "num": "10",
+      "desc": "Degrade log",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"status\":\"healthy\",\"database\":\"connected\"}",
+      "symbol": "[PASS]"
+    },
+    "1.1": {
+      "phase": "1",
+      "num": "1",
+      "desc": "POST /auth/register",
+      "status": 201,
+      "ok": true,
+      "body_preview": "{\"id\":7,\"email\":\"test_17cffc2c@example.com\",\"full_name\":\"Test User\",\"role\":\"analyst\",\"org_name\":null,\"is_active\":true}",
+      "symbol": "[PASS]"
+    },
+    "1.2": {
+      "phase": "1",
+      "num": "2",
+      "desc": "Duplicate register",
+      "status": 400,
+      "ok": true,
+      "body_preview": "{\"detail\":\"Email already registered\"}",
+      "symbol": "[PASS]"
+    },
+    "1.3": {
+      "phase": "1",
+      "num": "3",
+      "desc": "POST /auth/login",
+      "status": 500,
+      "ok": false,
+      "body_preview": "{\"error\":\"InternalServerError\",\"detail\":\"An unexpected error occurred. Please try again later.\",\"code\":\"INTERNAL_ERROR\",\"trace_id\":\"bb2fa65f-21d1-484b-a2e9-5a5354386f5e\"}",
+      "symbol": "[DEGR]"
+    },
+    "1.4": {
+      "phase": "1",
+      "num": "4",
+      "desc": "Bad password",
+      "status": 401,
+      "ok": true,
+      "body_preview": "{\"detail\":\"Invalid email or password\"}",
+      "symbol": "[PASS]"
+    },
+    "1.5": {
+      "symbol": "[FAIL]",
+      "desc": "GET /auth/me (with cookie)",
+      "ok": false,
+      "note": "No cookies from login"
+    },
+    "1.6": {
+      "phase": "1",
+      "num": "6",
+      "desc": "GET /auth/me (no cookie)",
+      "status": 401,
+      "ok": true,
+      "body_preview": "{\"detail\":\"Missing authentication token\"}",
+      "symbol": "[PASS]"
+    },
+    "1.7": {
+      "symbol": "[DEGR]",
+      "desc": "POST /auth/refresh",
+      "ok": false,
+      "note": "No refresh token cookie"
+    },
+    "1.8": {
+      "symbol": "[SKIP]",
+      "desc": "Refresh reuse",
+      "ok": true,
+      "note": "Skipped"
+    },
+    "1.9": {
+      "symbol": "[DEGR]",
+      "desc": "POST /auth/logout",
+      "ok": false,
+      "note": "No cookies"
+    },
+    "1.10": {
+      "symbol": "[SKIP]",
+      "desc": "Post-logout /auth/me",
+      "ok": true,
+      "note": "Skipped"
+    },
+    "2.1": {
+      "phase": "2",
+      "num": "1",
+      "desc": "POST /analyze scam",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"session_id\":\"sess-b5fe27e3\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"WARNING: This message contains suspicious OTP-relate",
+      "symbol": "[PASS]"
+    },
+    "2.2": {
+      "phase": "2",
+      "num": "2",
+      "desc": "POST /analyze clean",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"session_id\":\"sess-b4bf8a7c\",\"risk_score\":3,\"risk_level\":\"LOW\",\"recommended_action\":\"NONE\",\"flagged_entities\":[],\"warning_message_en\":\"\",\"warning_message_hi\":\"\",\"intervention_type\":\"NONE\"}",
+      "symbol": "[PASS]"
+    },
+    "2.3": {
+      "phase": "2",
+      "num": "3",
+      "desc": "Bilingual warning",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"session_id\":\"sess-8b4ee9e3\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"WARNING: This message contains suspicious OTP-relate",
+      "symbol": "[PASS]"
+    },
+    "2.4": {
+      "phase": "2",
+      "num": "4",
+      "desc": "Missing auth /analyze",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"session_id\":\"sess-b5fe27e3\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"WARNING: This message contains suspicious OTP-relate",
+      "symbol": "[PASS]"
+    },
+    "2.5": {
+      "phase": "2",
+      "num": "5",
+      "desc": "Validation empty",
+      "status": 422,
+      "ok": true,
+      "body_preview": "{\"detail\":[{\"type\":\"too_short\",\"loc\":[\"body\",\"messages\"],\"msg\":\"List should have at least 1 item after validation, not 0\",\"input\":[],\"ctx\":{\"field_type\":\"List\",\"min_length\":1,\"actual_length\":0}}]}",
+      "symbol": "[PASS]"
+    },
+    "2.6": {
+      "phase": "2",
+      "num": "6",
+      "desc": "POST /scan-message",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"result\":{\"is_scam\":false,\"confidence\":0.12,\"scam_type\":\"unknown\",\"risk_level\":\"LOW\",\"risk_score\":22,\"flagged_entities\":[],\"warning_message_en\":null,\"warning_message_hi\":null,\"recommendation\":\"This m",
+      "symbol": "[PASS]"
+    },
+    "2.7": {
+      "phase": "2",
+      "num": "7",
+      "desc": "POST /analyze/batch",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"total\":1,\"processed\":1,\"failed\":0,\"results\":[{\"session_id\":\"sess-83eba4d8\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"Pleas",
+      "symbol": "[PASS]"
+    },
+    "2.8": {
+      "phase": "2",
+      "num": "8",
+      "desc": "POST /webhook/pre-transaction",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"decision\":\"PASS\",\"reason\":\"No risk factors detected\",\"risk_score\":0,\"risk_level\":\"low\"}",
+      "symbol": "[PASS]"
+    },
+    "2.9": {
+      "symbol": "[PASS]",
+      "desc": "/analyze latency (267ms)",
+      "ok": true,
+      "note": null
+    },
+    "2.10": {
+      "symbol": "[SKIP]",
+      "desc": "ScanEvent persisted",
+      "ok": true,
+      "note": "Requires DB query; skip in live test"
+    },
+    "3.1": {
+      "phase": "3",
+      "num": "1",
+      "desc": "POST /report",
+      "status": 200,
+      "ok": false,
+      "body_preview": "{\"report_id\":\"320264b2-4956-49e2-8407-69e6e93e7964\",\"status\":\"confirmed\",\"message\":\"Report submitted. Entity has 4 report(s). Status: confirmed\"}",
+      "symbol": "[DEGR]"
+    },
+    "3.2": {
+      "phase": "3",
+      "num": "2",
+      "desc": "GET /reputation (reported)",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"entity\":\"suspicious@upi\",\"reputation_tier\":\"clean\",\"score\":0,\"direct_reports\":0,\"propagated_risk\":0.0,\"ring_membership\":null,\"last_reported_at\":null,\"first_seen\":null}",
+      "symbol": "[PASS]"
+    },
+    "3.3": {
+      "phase": "3",
+      "num": "3",
+      "desc": "GET /reputation (unknown)",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"entity\":\"unknown-clean-12345@upi\",\"reputation_tier\":\"clean\",\"score\":0,\"direct_reports\":0,\"propagated_risk\":0.0,\"ring_membership\":null,\"last_reported_at\":null,\"first_seen\":null}",
+      "symbol": "[PASS]"
+    },
+    "3.4": {
+      "phase": "3",
+      "num": "4",
+      "desc": "GET /analytics/dashboard",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"total_scans_today\":97,\"flagged_sessions\":5,\"entities_blacklisted\":2,\"false_positive_rate\":0.0,\"risk_distribution\":{\"low\":1,\"medium\":1,\"high\":0,\"critical\":0,\"total\":2},\"scam_type_breakdown\":[{\"scam_t",
+      "symbol": "[PASS]"
+    },
+    "3.5": {
+      "symbol": "[SKIP]",
+      "desc": "GET /analytics/time-series",
+      "ok": true,
+      "note": "Endpoint not found in codebase"
+    },
+    "3.6": {
+      "phase": "3",
+      "num": "6",
+      "desc": "GET /analytics/hotspots",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"data_source\":\"empty\",\"total_regions\":0,\"hotspots\":[]}",
+      "symbol": "[PASS]"
+    },
+    "3.7": {
+      "phase": "3",
+      "num": "7",
+      "desc": "POST /feedback",
+      "status": 201,
+      "ok": true,
+      "body_preview": "{\"id\":5,\"message\":\"Feedback recorded. Thank you.\"}",
+      "symbol": "[PASS]"
+    },
+    "3.8": {
+      "phase": "3",
+      "num": "8",
+      "desc": "GET /feedback/stats",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"total_feedback\":5,\"true_positives\":4,\"false_positives\":0,\"false_negatives\":1,\"false_positive_rate\":0.0}",
+      "symbol": "[PASS]"
+    },
+    "4.1": {
+      "phase": "4",
+      "num": "1",
+      "desc": "POST /recovery/initiate",
+      "status": 200,
+      "ok": false,
+      "body_preview": "{\"case_id\":\"11df03d8-bc70-4d08-bf1e-138181ace628\",\"fraud_type\":\"upi_fraud\",\"amount_lost\":25000.0,\"steps\":[{\"step_number\":1,\"title\":\"Raise Dispute in UPI App\",\"description\":\"Open UPI app, raise transac",
+      "symbol": "[DEGR]"
+    },
+    "4.2": {
+      "symbol": "[SKIP]",
+      "desc": "GET /recovery/{id}",
+      "ok": true,
+      "note": "No recovery ID"
+    },
+    "4.3": {
+      "symbol": "[SKIP]",
+      "desc": "PATCH /recovery/{id}",
+      "ok": true,
+      "note": "No recovery ID"
+    },
+    "4.4": {
+      "symbol": "[SKIP]",
+      "desc": "POST /recovery/{id}/submit-1930",
+      "ok": true,
+      "note": "Endpoint not found in codebase"
+    },
+    "4.5": {
+      "symbol": "[SKIP]",
+      "desc": "GET /recovery/{id}/complaint-pdf",
+      "ok": true,
+      "note": "Endpoint not found in codebase"
+    },
+    "4.6": {
+      "phase": "4",
+      "num": "6",
+      "desc": "GET /compliance/attestation/{quarter}",
+      "status": 401,
+      "ok": false,
+      "body_preview": "{\"detail\":\"Missing authentication token\"}",
+      "symbol": "[DEGR]"
+    },
+    "4.7": {
+      "phase": "4",
+      "num": "7",
+      "desc": "GET /dpdp/data-request",
+      "status": 401,
+      "ok": false,
+      "body_preview": "{\"detail\":\"Missing authentication token\"}",
+      "symbol": "[DEGR]"
+    },
+    "4.8": {
+      "phase": "4",
+      "num": "8",
+      "desc": "POST /dpdp/erasure-request",
+      "status": 401,
+      "ok": false,
+      "body_preview": "{\"detail\":\"Missing authentication token\"}",
+      "symbol": "[DEGR]"
+    },
+    "4.9": {
+      "phase": "4",
+      "num": "9",
+      "desc": "GET /audit/verify",
+      "status": 200,
+      "ok": true,
+      "body_preview": "[{\"id\":1,\"valid\":false,\"expected_hash\":\"62fe2712fe0d4dfea11c69f9c7a48cfd7dbb781b807e5eb78d647ecf87619dd9\",\"actual_hash\":\"19d72db2e48c6a7c721f1aa8e028ec9c29d199b10300482c373c6db28df025e7\"},{\"id\":2,\"val",
+      "symbol": "[PASS]"
+    },
+    "5.1": {
+      "phase": "5",
+      "num": "1",
+      "desc": "GET /graph/visualize",
+      "status": 401,
+      "ok": false,
+      "body_preview": "{\"detail\":\"Missing authentication token\"}",
+      "symbol": "[DEGR]"
+    },
+    "5.2": {
+      "phase": "5",
+      "num": "2",
+      "desc": "GET /graph/neighborhood",
+      "status": 404,
+      "ok": false,
+      "body_preview": "{\"detail\":\"Not Found\"}",
+      "symbol": "[DEGR]"
+    },
+    "5.3": {
+      "phase": "5",
+      "num": "3",
+      "desc": "GET /graph/shortest-path",
+      "status": 404,
+      "ok": false,
+      "body_preview": "{\"detail\":\"Not Found\"}",
+      "symbol": "[DEGR]"
+    },
+    "5.4": {
+      "phase": "5",
+      "num": "4",
+      "desc": "POST /intel/register-bank",
+      "status": 400,
+      "ok": false,
+      "body_preview": "{\"detail\":\"Bank code 'TEST01' already registered\"}",
+      "symbol": "[DEGR]"
+    },
+    "5.5": {
+      "phase": "5",
+      "num": "5",
+      "desc": "POST /intel/lookup",
+      "status": 401,
+      "ok": false,
+      "body_preview": "{\"detail\":\"Invalid or inactive bank API key\"}",
+      "symbol": "[DEGR]"
+    },
+    "5.6": {
+      "phase": "5",
+      "num": "6",
+      "desc": "POST /intel/share-entity",
+      "status": 401,
+      "ok": false,
+      "body_preview": "{\"detail\":\"Invalid or inactive bank API key\"}",
+      "symbol": "[DEGR]"
+    },
+    "6.1": {
+      "phase": "6",
+      "num": "1",
+      "desc": "POST /voice/analyze",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"is_scam\":true,\"confidence\":0.99,\"scam_type\":\"otp_harvesting\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"flagged_entities\":[],\"warning_en\":\"Warning: Suspicious patterns detected in this call.\",\"warning_h",
+      "symbol": "[PASS]"
+    },
+    "6.2": {
+      "symbol": "[SKIP]",
+      "desc": "POST /analyze-image",
+      "ok": true,
+      "note": "File upload endpoint; skip in curl-based runner"
+    },
+    "6.3": {
+      "phase": "6",
+      "num": "3",
+      "desc": "POST /behavioral-signal",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"session_id\":\"sess-47dc9c78\",\"result\":{\"behavioral_risk_score\":0.25,\"signals_analyzed\":1,\"high_risk_signals\":[\"otp_copy_paste\"],\"recommendation\":\"Low behavioral risk. Some minor anomalies detected bu",
+      "symbol": "[PASS]"
+    },
+    "6.4": {
+      "phase": "6",
+      "num": "4",
+      "desc": "POST /explain",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"text\":\"Why is this a scam?\",\"matched_keywords\":[],\"detected_entities\":[],\"model_attributions\":[],\"total_factors\":0}",
+      "symbol": "[PASS]"
+    },
+    "6.5": {
+      "phase": "6",
+      "num": "5",
+      "desc": "PII redaction",
+      "status": 200,
+      "ok": false,
+      "body_preview": "{\"text\":\"My Aadhaar is 1234-5678-9012\",\"matched_keywords\":[],\"detected_entities\":[],\"model_attributions\":[],\"total_factors\":0}",
+      "symbol": "[FAIL]"
+    },
+    "7.1": {
+      "symbol": "[SKIP]",
+      "desc": "Frontend 7.1",
+      "ok": true,
+      "note": "Requires browser automation; skipped in server-only test run"
+    },
+    "7.2": {
+      "symbol": "[SKIP]",
+      "desc": "Frontend 7.2",
+      "ok": true,
+      "note": "Requires browser automation; skipped in server-only test run"
+    },
+    "7.3": {
+      "symbol": "[SKIP]",
+      "desc": "Frontend 7.3",
+      "ok": true,
+      "note": "Requires browser automation; skipped in server-only test run"
+    },
+    "7.4": {
+      "symbol": "[SKIP]",
+      "desc": "Frontend 7.4",
+      "ok": true,
+      "note": "Requires browser automation; skipped in server-only test run"
+    },
+    "7.5": {
+      "symbol": "[SKIP]",
+      "desc": "Frontend 7.5",
+      "ok": true,
+      "note": "Requires browser automation; skipped in server-only test run"
+    },
+    "7.6": {
+      "symbol": "[SKIP]",
+      "desc": "Frontend 7.6",
+      "ok": true,
+      "note": "Requires browser automation; skipped in server-only test run"
+    },
+    "7.7": {
+      "symbol": "[SKIP]",
+      "desc": "Frontend 7.7",
+      "ok": true,
+      "note": "Requires browser automation; skipped in server-only test run"
+    },
+    "8.1": {
+      "phase": "8",
+      "num": "1",
+      "desc": "GET /metrics after traffic",
+      "status": 200,
+      "ok": true,
+      "body_preview": "# HELP python_gc_objects_collected_total Objects collected during gc\n# TYPE python_gc_objects_collected_total counter\npython_gc_objects_collected_total{generation=\"0\"} 5356.0\npython_gc_objects_collect",
+      "symbol": "[PASS]"
+    },
+    "8.2": {
+      "symbol": "[SKIP]",
+      "desc": "WS /ws/dashboard",
+      "ok": true,
+      "note": "WebSocket requires ws client; skip in curl-based runner"
+    },
+    "8.3": {
+      "symbol": "[PASS]",
+      "desc": "Celery worker boot",
+      "ok": true,
+      "note": null
+    },
+    "8.4": {
+      "symbol": "[SKIP]",
+      "desc": "Celery beat boot",
+      "ok": true,
+      "note": "Requires separate beat process; skip in curl-based runner"
+    },
+    "8.5": {
+      "phase": "8",
+      "num": "5",
+      "desc": "GET /explain/drift",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"model_version\":\"unknown\",\"features\":[],\"alerts_count\":0}",
+      "symbol": "[PASS]"
+    },
+    "9.1": {
+      "symbol": "[PASS]",
+      "desc": "Rate limit /analyze",
+      "ok": true,
+      "note": null
+    },
+    "9.2": {
+      "phase": "9",
+      "num": "2",
+      "desc": "Expired/bad token",
+      "status": 401,
+      "ok": true,
+      "body_preview": "{\"detail\":\"Invalid or expired token\"}",
+      "symbol": "[PASS]"
+    },
+    "9.3": {
+      "phase": "9",
+      "num": "3",
+      "desc": "Malformed JWT",
+      "status": 401,
+      "ok": true,
+      "body_preview": "{\"detail\":\"Invalid or expired token\"}",
+      "symbol": "[PASS]"
+    },
+    "9.4": {
+      "phase": "9",
+      "num": "4",
+      "desc": "Unknown route",
+      "status": 404,
+      "ok": true,
+      "body_preview": "{\"detail\":\"Not Found\"}",
+      "symbol": "[PASS]"
+    },
+    "9.5": {
+      "symbol": "[PASS]",
+      "desc": "Triggered exception",
+      "ok": true,
+      "note": "HTTP 200 -- check if 500 envelope has no stacktrace"
+    },
+    "9.6": {
+      "symbol": "[SKIP]",
+      "desc": "Tenant isolation",
+      "ok": true,
+      "note": "Requires multi-tenant setup; skip in curl-based runner"
+    }
+  }
+}

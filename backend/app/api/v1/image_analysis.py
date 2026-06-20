@@ -9,15 +9,20 @@ Uses pyzbar for QR decoding and Pillow for image metadata analysis.
 Falls back gracefully if optional dependencies are not installed.
 """
 
+import asyncio
 import hashlib
 import logging
 import time
-from typing import Any, Dict, List, Optional
+import uuid
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.auth import verify_api_key
+from app.config import settings
+from app.services.intel.verdict import Modality, build_verdict
+from app.services.intel.ingest_normalizer import normalize_and_emit
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +70,7 @@ class AnalyzeImageResponse(BaseModel):
 
     result: ImageAnalysisResult
     processing_time_ms: int
+    verdict: Optional[dict] = None
 
 
 class ErrorResponse(BaseModel):
@@ -222,7 +228,7 @@ async def analyze_image(
         analysis_notes: List[str] = []
 
         # QR code analysis
-        if _image_deps_available:
+        if settings.image_qr_decode_enabled and _image_deps_available:
             try:
                 img = Image.open(io.BytesIO(image_bytes))
                 decoded_objects = qr_decode(img)
@@ -271,6 +277,81 @@ async def analyze_image(
             processing_time_ms,
         )
 
+        # Build entities from QR codes and analysis
+        from app.schemas.entity import EntityType, ExtractedEntity
+        from app.schemas.risk import RiskLevel, ActionCode
+
+        entities = []
+        for qr in qr_results:
+            if qr.content_type == "upi_payment":
+                etype = EntityType.UPI
+            elif qr.content_type == "url":
+                etype = EntityType.URL_SHORTLINK
+            else:
+                etype = EntityType.APK
+            entities.append(ExtractedEntity(
+                entity_type=etype,
+                value=qr.content,
+                start_char=0,
+                end_char=len(qr.content),
+                confidence_score=1.0 if qr.is_suspicious else 0.5,
+            ))
+
+        risk_level_enum = {
+            "critical": RiskLevel.CRITICAL,
+            "high": RiskLevel.HIGH,
+            "medium": RiskLevel.MEDIUM,
+            "low": RiskLevel.LOW,
+        }.get(risk_level, RiskLevel.LOW)
+
+        risk_score_map = {
+            "critical": 90.0,
+            "high": 70.0,
+            "medium": 45.0,
+            "low": 15.0,
+        }
+        risk_score = risk_score_map.get(risk_level, 15.0)
+
+        action_map = {
+            "critical": ActionCode.CRITICAL_REPORT,
+            "high": ActionCode.HARD_BLOCK,
+            "medium": ActionCode.SOFT_WARNING,
+            "low": ActionCode.NONE,
+        }
+        recommended_action = action_map.get(risk_level, ActionCode.NONE)
+
+        session_id = str(uuid.uuid4())
+
+        verdict = build_verdict(
+            session_id=session_id,
+            is_scam=has_suspicious,
+            scam_type=__import__("app.schemas.analyze", fromlist=["ScamType"]).ScamType.PHISHING if has_suspicious else __import__("app.schemas.analyze", fromlist=["ScamType"]).ScamType.UNKNOWN,
+            risk_score=risk_score,
+            risk_level=risk_level_enum,
+            confidence=1.0 if has_qr else 0.3,
+            recommended_action=recommended_action,
+            entities=entities,
+            modality=Modality.IMAGE,
+        )
+
+        # Fire-and-forget: normalize and emit to sinks
+        try:
+            asyncio.create_task(normalize_and_emit(
+                event_type="image",
+                payload={
+                    "session_id": session_id,
+                    "image_hash": image_hash,
+                    "qr_codes": [qr.model_dump() for qr in qr_results],
+                    "risk_level": risk_level,
+                    "risk_score": risk_score,
+                    "is_scam": has_suspicious,
+                    "flagged_entities": [e.model_dump() for e in entities],
+                },
+                db=None,
+            ))
+        except Exception as emit_err:
+            logger.warning("Failed to emit image ingest event: %s", emit_err)
+
         return AnalyzeImageResponse(
             result=ImageAnalysisResult(
                 has_qr_code=has_qr,
@@ -281,6 +362,7 @@ async def analyze_image(
                 risk_level=risk_level,
             ),
             processing_time_ms=processing_time_ms,
+            verdict=verdict.model_dump(mode="json"),
         )
 
     except HTTPException:

@@ -1,23 +1,96 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  --background: #0b0f1a;
-  --foreground: #e2e8f0;
-  --card: #111827;
-  --card-border: #1e293b;
-  --accent-blue: #3b82f6;
-  --accent-red: #ef4444;
-  --accent-orange: #f97316;
-  --accent-green: #22c55e;
-  --accent-purple: #a855f7;
+@theme {
+  --color-surface: #111827;
+  --color-surface-light: #1e293b;
+  --color-surface-lighter: #334155;
+  --color-danger: #ef4444;
+  --color-danger-dim: #7f1d1d;
+  --color-warning: #f97316;
+  --color-warning-dim: #7c2d12;
+  --color-success: #22c55e;
+  --color-success-dim: #14532d;
+  --color-info: #3b82f6;
+  --color-info-dim: #1e3a5f;
+  --color-accent-purple: #a855f7;
+  --color-background: oklch(0.145 0.015 260);
+  --color-foreground: oklch(0.93 0.006 260);
+  --color-card: oklch(0.2 0.01 260);
+  --color-card-foreground: oklch(0.93 0.006 260);
+  --color-popover: oklch(0.2 0.01 260);
+  --color-popover-foreground: oklch(0.93 0.006 260);
+  --color-primary: oklch(0.6 0.15 250);
+  --color-primary-foreground: oklch(0.99 0 0);
+  --color-secondary: oklch(0.25 0.01 260);
+  --color-secondary-foreground: oklch(0.7 0.01 260);
+  --color-muted: oklch(0.25 0.01 260);
+  --color-muted-foreground: oklch(0.55 0.01 260);
+  --color-accent: oklch(0.6 0.2 300);
+  --color-accent-foreground: oklch(0.99 0 0);
+  --color-destructive: oklch(0.6 0.2 25);
+  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-border: oklch(0.25 0.01 260);
+  --color-input: oklch(0.25 0.01 260);
+  --color-ring: oklch(0.6 0.15 250);
+  --font-sans: "Inter", "Noto Sans Devanagari", ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: 'Inter', Arial, Helvetica, sans-serif;
+:root {
+  --background: oklch(0.145 0.015 260);
+  --foreground: oklch(0.93 0.006 260);
+  --card: oklch(0.2 0.01 260);
+  --card-foreground: oklch(0.93 0.006 260);
+  --popover: oklch(0.2 0.01 260);
+  --popover-foreground: oklch(0.93 0.006 260);
+  --primary: oklch(0.6 0.15 250);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.25 0.01 260);
+  --secondary-foreground: oklch(0.7 0.01 260);
+  --muted: oklch(0.25 0.01 260);
+  --muted-foreground: oklch(0.55 0.01 260);
+  --accent: oklch(0.6 0.2 300);
+  --accent-foreground: oklch(0.99 0 0);
+  --destructive: oklch(0.6 0.2 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.25 0.01 260);
+  --input: oklch(0.25 0.01 260);
+  --ring: oklch(0.6 0.15 250);
+}
+
+.dark {
+  --background: oklch(0.145 0.015 260);
+  --foreground: oklch(0.93 0.006 260);
+  --card: oklch(0.2 0.01 260);
+  --card-foreground: oklch(0.93 0.006 260);
+  --popover: oklch(0.2 0.01 260);
+  --popover-foreground: oklch(0.93 0.006 260);
+  --primary: oklch(0.6 0.15 250);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.25 0.01 260);
+  --secondary-foreground: oklch(0.7 0.01 260);
+  --muted: oklch(0.25 0.01 260);
+  --muted-foreground: oklch(0.55 0.01 260);
+  --accent: oklch(0.6 0.2 300);
+  --accent-foreground: oklch(0.99 0 0);
+  --destructive: oklch(0.6 0.2 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.25 0.01 260);
+  --input: oklch(0.25 0.01 260);
+  --ring: oklch(0.6 0.15 250);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
 }
 
 @layer utilities {
@@ -57,4 +130,25 @@ body {
   background: linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.15) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 3s infinite;
+}
+
+@keyframes gauge-fill {
+  from { stroke-dashoffset: 251; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-feed-in,
+  .animate-pulse-dot,
+  .animate-slide-up,
+  .shimmer-border {
+    animation: none;
+  }
 }

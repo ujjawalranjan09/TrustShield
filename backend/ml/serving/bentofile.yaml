@@ -1,0 +1,8 @@
+service: "service.py:ScamClassifierService"
+include:
+  - "service.py"
+  - "artifacts/"
+python:
+  version: "3.11"
+docker:
+  python_version: "3.11"

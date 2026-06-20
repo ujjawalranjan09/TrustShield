@@ -1,0 +1,64 @@
+{
+  "auth": {
+    "loginTitle": "Sign in to TrustShield",
+    "loginSubtitle": "Real-time AI-powered fraud detection platform",
+    "registerTitle": "Create Account",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full Name",
+    "confirmPassword": "Confirm Password",
+    "orgName": "Organization (optional)",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "createAccount": "Create Account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "register": "Register",
+    "login": "Sign in"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Real-time fraud monitoring and analytics",
+    "scansToday": "Total Scans Today",
+    "flaggedSessions": "Flagged Sessions",
+    "blacklistedEntities": "Blacklisted Entities",
+    "falsePositiveRate": "False Positive Rate",
+    "fraudTrend": "Fraud Trend",
+    "liveFeed": "Live Fraud Feed"
+  },
+  "explainability": {
+    "title": "Explainability",
+    "pasteText": "Paste text to analyze",
+    "getExplanation": "Get Explanation",
+    "featureContributions": "Feature Contributions",
+    "factorExplorer": "Factor Explorer",
+    "driftDashboard": "Drift Dashboard",
+    "modelCard": "Model Card"
+  },
+  "scan": {
+    "title": "Scam Scanner",
+    "subtitle": "Analyze suspicious messages for fraud indicators",
+    "placeholder": "Paste a suspicious message here...",
+    "scanButton": "Scan Message",
+    "scanning": "Scanning...",
+    "scamDetected": "Scam Detected",
+    "appearsSafe": "This message appears safe",
+    "confidence": "Confidence",
+    "scamType": "Scam Type",
+    "riskLevel": "Risk Level",
+    "flaggedEntities": "Flagged Entities",
+    "recommendation": "Recommendation",
+    "warnings": "Warnings",
+    "processingTime": "Processing Time",
+    "poweredBy": "Powered by TrustShield AI",
+    "trySample": "Try Sample"
+  },
+  "billing": {
+    "title": "Billing",
+    "subtitle": "Manage your subscription and usage"
+  },
+  "investigate": {
+    "title": "Investigate",
+    "sessions": "Sessions"
+  }
+}

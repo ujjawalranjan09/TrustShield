@@ -1,0 +1,48 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "title": "Model Fallback by Tier",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(model_fallback_total[5m])",
+          "legendFormat": "{{tier}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Keyword Fallback Rate",
+      "type": "gauge",
+      "targets": [
+        {
+          "expr": "rate(model_fallback_total{tier=\"keyword\"}[5m]) / rate(model_fallback_total[5m])",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "max": 1, "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 0.05, "color": "yellow" }, { "value": 0.1, "color": "red" }] } }
+      }
+    },
+    {
+      "title": "Drift PSI",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "drift_psi",
+          "legendFormat": "PSI",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "thresholds": { "steps": [{ "value": 0, "color": "green" }, { "value": 0.1, "color": "yellow" }, { "value": 0.2, "color": "red" }] } }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["trustshield", "ml"],
+  "title": "TrustShield Model Performance",
+  "uid": "trustshield-model"
+}

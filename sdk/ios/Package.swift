@@ -12,5 +12,9 @@ let package = Package(
             name: "TrustShieldSDK",
             path: "Sources"
         ),
+        .testTarget(
+            name: "TrustShieldSDKTests",
+            dependencies: ["TrustShieldSDK"]
+        ),
     ]
 )

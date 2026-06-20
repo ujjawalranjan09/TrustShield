@@ -15,11 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.auth import verify_api_key
 from app.schemas.entity import ExtractedEntity
-from app.schemas.risk import ActionCode, RiskLevel
-from app.services.nlp.classifier import ScamClassifier
-from app.services.nlp.entity_extractor import EntityExtractor
-from app.services.nlp.preprocessor import TextPreprocessor
-from app.services.nlp.risk_scorer import RiskScorer, SessionContext
+from app.services.nlp.risk_scorer import SessionContext
 
 logger = logging.getLogger(__name__)
 
@@ -86,13 +82,27 @@ class ErrorResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Service instances (lightweight, no DB needed)
+# Service instances (lazy init — no module-level singletons)
 # ---------------------------------------------------------------------------
 
-_preprocessor = TextPreprocessor()
-_extractor = EntityExtractor()
-_classifier = ScamClassifier()
-_scorer = RiskScorer()
+_preprocessor = None
+_extractor = None
+_classifier = None
+_scorer = None
+
+
+def _get_services():
+    global _preprocessor, _extractor, _classifier, _scorer
+    if _preprocessor is None:
+        from app.services.nlp.preprocessor import TextPreprocessor
+        from app.services.nlp.entity_extractor import EntityExtractor
+        from app.services.nlp.classifier import ScamClassifier
+        from app.services.nlp.risk_scorer import RiskScorer
+        _preprocessor = TextPreprocessor()
+        _extractor = EntityExtractor()
+        _classifier = ScamClassifier()
+        _scorer = RiskScorer()
+    return _preprocessor, _extractor, _classifier, _scorer
 
 
 # ---------------------------------------------------------------------------
@@ -140,6 +150,23 @@ def _get_recommendation(score: int, entities: List[ExtractedEntity]) -> str:
 
 
 @router.post(
+    "/scan",
+    response_model=ScanMessageResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+        429: {"model": ErrorResponse, "description": "Rate limit exceeded"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def scan_message_short(
+    request: ScanMessageRequest,
+    _: bool = Depends(verify_api_key),
+) -> ScanMessageResponse:
+    """Alias for /scan-message — scan a single message for scam indicators."""
+    return await _do_scan(request)
+
+
+@router.post(
     "/scan-message",
     response_model=ScanMessageResponse,
     responses={
@@ -152,6 +179,10 @@ async def scan_message(
     request: ScanMessageRequest,
     _: bool = Depends(verify_api_key),
 ) -> ScanMessageResponse:
+    return await _do_scan(request)
+
+
+async def _do_scan(request: ScanMessageRequest) -> ScanMessageResponse:
     """Scan a single message for scam indicators.
 
     Designed for WhatsApp/Telegram bot integration. Users forward
@@ -165,19 +196,20 @@ async def scan_message(
     5. Generate bilingual recommendation
     """
     start_time = time.time()
+    preprocessor, extractor, classifier, scorer = _get_services()
 
     try:
         # 1. Preprocess
-        cleaned_text = _preprocessor.clean(request.text)
+        cleaned_text = preprocessor.clean(request.text)
 
         # 2. Detect language if not provided
-        language = request.language or _preprocessor.detect_language(cleaned_text)
+        _language = request.language or preprocessor.detect_language(cleaned_text)
 
         # 3. Extract entities
-        entities = _extractor.extract(cleaned_text)
+        entities = extractor.extract(cleaned_text)
 
         # 4. Classify
-        classification = await _classifier.classify(cleaned_text)
+        classification = await classifier.classify(cleaned_text)
 
         # 5. Risk scoring (simplified context for standalone scan)
         context = SessionContext(
@@ -189,7 +221,7 @@ async def scan_message(
             is_during_active_upi_session=False,
             prior_reports_for_sender=0,
         )
-        risk = _scorer.score(context)
+        risk = scorer.score(context)
 
         # 6. Generate recommendation
         recommendation = _get_recommendation(risk.score, entities)
@@ -197,14 +229,16 @@ async def scan_message(
         processing_time_ms = max(1, int((time.time() - start_time) * 1000))
 
         # Determine warning messages
-        warning_en = None
-        warning_hi = None
-        if risk.score >= 50:
-            warning_en = "Warning: This message appears to be a scam!"
-            warning_hi = "Chetawani: Yeh sandesh dhoka lag raha hai!"
-        elif risk.score >= 20:
-            warning_en = "Caution: This message has suspicious elements."
-            warning_hi = "Savdhan: Is sandesh mein kuch sandeh hai."
+        # Generate adaptive warnings
+        from app.services.nlp.warning_generator import WarningGenerator
+        warn_gen = WarningGenerator()
+        warnings = warn_gen.generate(
+            scam_type=classification.scam_type.value,
+            risk_score=risk.score,
+            entities=entities,
+        )
+        warning_en = warnings["warning_en"] or None
+        warning_hi = warnings["warning_hi"] or None
 
         logger.info(
             "Scanned message: is_scam=%s confidence=%.2f score=%d entities=%d (%dms)",

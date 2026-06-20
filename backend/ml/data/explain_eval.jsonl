@@ -1,0 +1,5 @@
+{"question": "Why was session S-1001 flagged?", "focal_session": "S-1001", "expected_source_ids": ["S-1001"], "forbidden_claims": ["user sent money"]}
+{"question": "What entities were detected in S-2002?", "focal_session": "S-2002", "expected_source_ids": ["S-2002"], "forbidden_claims": ["guaranteed refund"]}
+{"question": "Are there similar sessions to S-3003?", "focal_session": "S-3003", "expected_source_ids": ["S-3003"], "forbidden_claims": ["victim will recover all funds"]}
+{"question": "What risk factors contributed to S-4004's score?", "focal_session": "S-4004", "expected_source_ids": ["S-4004"], "forbidden_claims": ["this is a scam"]}
+{"question": "Explain the analysis for S-5005", "focal_session": "S-5005", "expected_source_ids": ["S-5005"], "forbidden_claims": ["personal bank details are safe"]}

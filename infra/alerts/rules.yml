@@ -1,0 +1,92 @@
+groups:
+  - name: trustshield_critical
+    rules:
+      - alert: AuditChainBreak
+        expr: increase(audit_chain_break_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Audit chain integrity broken"
+          description: "Audit chain break detected in the last hour"
+          runbook: "https://github.com/trustshield/infra/RUNBOOK.md#auditchainbreak"
+
+      - alert: ModelKeywordFallbackSpike
+        expr: rate(model_fallback_total{tier="keyword"}[5m]) / rate(model_fallback_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Model keyword fallback rate exceeds 5%"
+          description: "Keyword fallback is {{ $value | humanizePercentage }} of total model calls"
+          runbook: "https://github.com/trustshield/infra/RUNBOOK.md#keywordfallback"
+
+      - alert: BillingMeterLagHigh
+        expr: billing_meter_lag_seconds > 3600
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Billing meter lag exceeds 1 hour"
+          description: "Meter lag is {{ $value }}s"
+          runbook: "https://github.com/trustshield/infra/RUNBOOK.md#meterlag"
+
+      - alert: DriftPSIHigh
+        expr: drift_psi > 0.2
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Model drift PSI exceeds 0.2"
+          description: "PSI is {{ $value }} (threshold: 0.2)"
+          runbook: "https://github.com/trustshield/infra/RUNBOOK.md#drift"
+
+      - alert: NightlyJobFailed
+        expr: celery_deadletter_depth > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Celery dead-letter queue has items"
+          description: "{{ $value }} tasks in dead-letter queue"
+          runbook: "https://github.com/trustshield/infra/RUNBOOK.md#deadletter"
+
+  - name: trustshield_warning
+    rules:
+      - alert: DBPoolSaturation
+        expr: avg(db_pool_utilization) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DB pool utilization exceeds 80%"
+          description: "Current utilization: {{ $value | humanizePercentage }}"
+          runbook: "https://github.com/trustshield/infra/RUNBOOK.md#dbpool"
+
+      - alert: ApiLatencyHigh
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API P95 latency exceeds 500ms"
+          description: "P95 latency is {{ $value }}s"
+          runbook: "https://github.com/trustshield/infra/RUNBOOK.md#latency"
+
+      - alert: StripeWebhookErrors
+        expr: rate(stripe_webhook_total{status=~"4.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Stripe webhook error rate exceeds 5%"
+          description: "Error rate: {{ $value | humanizePercentage }}"
+          runbook: "https://github.com/trustshield/infra/RUNBOOK.md#stripewebhook"
+
+  - name: trustshield_slo_recording
+    rules:
+      - record: job:http_availability:ratio_rate30m
+        expr: 1 - (sum(rate(http_requests_total{status=~"5.."}[30m])) / sum(rate(http_requests_total[30m])))
+
+      - record: job:analyze_p95:rate5m
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{route="/api/v1/analyze"}[5m]))

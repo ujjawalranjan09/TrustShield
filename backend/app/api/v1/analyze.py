@@ -10,10 +10,11 @@ import time
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.auth import verify_api_key
+from app.auth import get_current_user, verify_api_key
+from app.middleware.billing import require_billing_quota
 from app.schemas.entity import ExtractedEntity
 from app.schemas.risk import ActionCode, RiskLevel
 from app.services.intervention.action_engine import ActionEngine, GraphEnrichment
@@ -21,6 +22,10 @@ from app.services.nlp.classifier import ScamClassifier
 from app.services.nlp.entity_extractor import EntityExtractor
 from app.services.nlp.preprocessor import TextPreprocessor
 from app.services.nlp.risk_scorer import RiskScorer, SessionContext
+from app.models.scan_event import ScanEvent
+from app.models.user import User
+from app.database import get_async_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -149,12 +154,15 @@ def get_action_engine() -> ActionEngine:
 )
 async def analyze_chat(
     request: AnalyzeRequest,
-    _: bool = Depends(verify_api_key),
+    _api_key: bool = Depends(verify_api_key),
+    _billing: None = Depends(require_billing_quota("analyze")),
+    current_user: "User" = Depends(get_current_user),
     preprocessor: TextPreprocessor = Depends(get_preprocessor),
     extractor: EntityExtractor = Depends(get_extractor),
     classifier: ScamClassifier = Depends(get_classifier),
     scorer: RiskScorer = Depends(get_scorer),
     action_engine: ActionEngine = Depends(get_action_engine),
+    db: AsyncSession = Depends(get_async_db),
 ) -> AnalyzeResponse:
     """Analyze a chat session for fraud indicators.
 
@@ -198,12 +206,22 @@ async def analyze_chat(
         )
         base_risk = scorer.score(context)
 
-        # 6. Graph enrichment (mocked)
+        # 6. Graph enrichment (real Neo4j lookup)
+        from app.services.graph.entity_graph import FraudEntityGraph
+        graph = FraudEntityGraph()
+        try:
+            graph_risk = 0.0
+            blacklisted = 0
+            for ent in entities:
+                ent_risk = await graph.get_entity_risk(ent.value)
+                graph_risk = max(graph_risk, ent_risk)
+                connected = await graph.get_neighbors(ent.value, depth=1)
+                blacklisted += len(connected)
+        finally:
+            await graph.close()
         graph_enrichment = GraphEnrichment(
-            graph_risk_score=0.2
-            if any(e.entity_type.value == "PHONE" for e in entities)
-            else 0.0,
-            connected_blacklisted_entities=0,
+            graph_risk_score=graph_risk,
+            connected_blacklisted_entities=blacklisted,
         )
 
         # 7. Action engine
@@ -228,14 +246,86 @@ async def analyze_chat(
             processing_time * 1000,
         )
 
+        # 8.5. Trigger alerts for high-risk detections
+        if base_risk.level.value in ("CRITICAL", "HIGH"):
+            from app.services.alerting.alert_service import trigger_alert
+            try:
+                await trigger_alert(
+                    session_id=request.session_metadata.session_id,
+                    risk_score=base_risk.score,
+                    risk_level=base_risk.level.value,
+                    action=decision.action.value,
+                    entities=[e.entity_type.value for e in entities],
+                )
+            except Exception as alert_err:
+                logger.warning("Alert trigger failed: %s", alert_err)
+
+        # 9. Log scan event for dashboard metrics
+        try:
+            scan_event = ScanEvent(
+                session_id=request.session_metadata.session_id,
+                scan_type="analyze",
+                risk_score=base_risk.score,
+                risk_level=base_risk.level.value,
+                action_taken=decision.action.value,
+                entities_found=len(entities),
+                processing_time_ms=int(processing_time * 1000),
+            )
+            db.add(scan_event)
+            await db.commit()
+        except Exception as e:
+            logger.warning("Failed to log scan event: %s", e)
+
+        # 10. Broadcast to dashboard WebSocket clients
+        try:
+            from app.api.v1.ws_dashboard import broadcast_event
+            import asyncio
+            asyncio.create_task(broadcast_event({
+                "type": "fraud_event",
+                "session_id": request.session_metadata.session_id,
+                "risk_score": base_risk.score,
+                "risk_level": base_risk.level.value,
+                "action": decision.action.value,
+                "entities": [e.entity_type.value for e in entities],
+            }))
+        except Exception:
+            pass  # Non-critical
+
+        # Publish event to event bus
+        try:
+            from app.services.events.publisher import get_event_publisher
+            publisher = get_event_publisher()
+            await publisher.publish(
+                topic="scan_completed",
+                event_type="analysis_complete",
+                payload={
+                    "session_id": request.session_metadata.session_id,
+                    "risk_score": base_risk.score,
+                    "risk_level": base_risk.level.value,
+                    "scam_type": classification_result.scam_type.value,
+                    "entities_found": len(entities),
+                },
+            )
+        except Exception:
+            pass  # Non-critical
+
+        # Generate adaptive warnings
+        from app.services.nlp.warning_generator import WarningGenerator
+        warn_gen = WarningGenerator()
+        warnings = warn_gen.generate(
+            scam_type=classification_result.scam_type.value,
+            risk_score=base_risk.score,
+            entities=entities,
+        )
+
         return AnalyzeResponse(
             session_id=request.session_metadata.session_id,
             risk_score=base_risk.score,
             risk_level=base_risk.level,
             recommended_action=decision.action,
             flagged_entities=entities,
-            warning_message_en=decision.warning_message_en,
-            warning_message_hi=decision.warning_message_hi,
+            warning_message_en=warnings["warning_en"],
+            warning_message_hi=warnings["warning_hi"],
             intervention_type=decision.action.value,
         )
 
@@ -261,6 +351,7 @@ async def analyze_chat(
 async def webhook_pre_transaction(
     request: WebhookRequest,
     _: bool = Depends(verify_api_key),
+    _billing: None = Depends(require_billing_quota("webhook")),
 ) -> WebhookResponse:
     """Webhook endpoint for banks to check transactions before processing.
 

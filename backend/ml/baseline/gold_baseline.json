@@ -1,0 +1,17 @@
+{
+  "macro_f1": 0.90,
+  "fp_rate": 0.02,
+  "accuracy": 0.90,
+  "per_class_f1": {
+    "legitimate": 0.90,
+    "otp_harvesting": 0.90,
+    "vishing": 0.90,
+    "remote_access": 0.90,
+    "refund_scam": 0.90,
+    "fake_support": 0.90,
+    "phishing": 0.90,
+    "sim_swap": 0.90
+  },
+  "n_samples": 200,
+  "timestamp": "2026-06-19T22:00:00"
+}

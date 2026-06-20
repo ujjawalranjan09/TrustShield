@@ -13,15 +13,18 @@ PHONE_PATTERN = re.compile(
     r'(?:\+91[\s-]?|91[\s-]?|0)?[789]\d[\s-]?\d{4}[\s-]?\d{4}\b'
 )
 
-# AnyDesk ID: 9-digit number preceded by contextual keywords
+# AnyDesk ID: 9-10 digit number preceded by the tool keyword.
+# Allows intervening words ("my id is", "share your", etc.) between the
+# tool mention and the numeric id, up to a short window so we don't match
+# unrelated long-digit sequences elsewhere in the text.
 ANYDESK_PATTERN = re.compile(
-    r'(?:anydesk|any\s*desk|remote\s*access)\s*(?:id|code|number)?[\s:]*(\d{9,10})\b',
+    r'(?:anydesk|any\s*desk|remote\s*access)(?:[^\d]{0,40}?)(\d{9,10})\b',
     re.IGNORECASE
 )
 
-# TeamViewer ID: 9-10 digit number preceded by contextual keywords
+# TeamViewer ID: 9-10 digit number preceded by the tool keyword (same window).
 TEAMVIEWER_PATTERN = re.compile(
-    r'(?:teamviewer|team\s*viewer)\s*(?:id|code|number)?[\s:]*(\d{9,10})\b',
+    r'(?:teamviewer|team\s*viewer)(?:[^\d]{0,40}?)(\d{9,10})\b',
     re.IGNORECASE
 )
 

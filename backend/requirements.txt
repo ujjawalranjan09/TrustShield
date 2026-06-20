@@ -5,7 +5,8 @@ python-multipart==0.0.6
 
 # Database
 sqlalchemy>=2.0.0
-psycopg2-binary>=2.9.9
+asyncpg>=0.29.0
+aiosqlite>=0.20.0
 alembic>=1.13.0
 pgvector>=0.2.0
 
@@ -32,6 +33,9 @@ pydantic-settings>=2.0.0
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
+# SSO/SAML
+lxml>=5.0.0
+
 # Utilities
 python-dotenv==1.0.0
 httpx==0.26.0
@@ -43,13 +47,44 @@ celery[redis]==5.3.6
 # Testing
 pytest==7.4.4
 pytest-asyncio==0.23.4
+locust>=2.20.0
+
+# ML — Behavioral model
+xgboost>=2.0.0
 
 # Monitoring
 prometheus-client==0.19.0
+structlog>=24.0.0
+opentelemetry-api>=1.22.0
+opentelemetry-sdk>=1.22.0
+opentelemetry-instrumentation-fastapi>=0.43b0
+opentelemetry-instrumentation-sqlalchemy>=0.43b0
+opentelemetry-instrumentation-redis>=0.43b0
+opentelemetry-exporter-otlp-proto-http>=1.22.0
+sentry-sdk[fastapi]>=1.40.0
 
 # Compliance
 reportlab==4.1.0
 
+# Billing
+stripe>=8.0.0
+
+# PII Encryption
+cryptography>=42.0.0
+
+# AWS (KMS, Secrets Manager, S3)
+boto3>=1.34.0
+
+# Model Serving
+bentoml>=1.2.0
+
+# Testing extras
+moto[secretsmanager,kms,s3]>=5.0.0
+
+# Voice
+faster-whisper>=1.0.0
+deepgram-sdk>=3.0.0
+
 # Image Analysis
-# pyzbar and Pillow removed due to Windows DLL dependency issues
-# Image analysis will work without QR code detection
+Pillow>=10.0.0
+pyzbar>=0.1.9

@@ -6,8 +6,17 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "vitest run"
   },
-  "keywords": ["fraud", "upi", "trustshield", "security", "payments"],
-  "license": "MIT"
+  "keywords": [
+    "fraud",
+    "upi",
+    "trustshield",
+    "security",
+    "payments"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^4.1.9"
+  }
 }

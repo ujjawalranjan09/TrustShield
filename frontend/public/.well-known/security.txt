@@ -1,0 +1,35 @@
+Contact: mailto:security@trustshield.in
+Contact: https://trustshield.in/security
+Expires: 2027-06-19T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://trustshield.in/.well-known/security.txt
+Policy: https://trustshield.in/security/disclosure
+
+# TrustShield Security Policy
+#
+# We take security seriously. If you discover a vulnerability, please report it responsibly.
+#
+# ## Reporting a Vulnerability
+#
+# 1. Email security@trustshield.in with details
+# 2. Include steps to reproduce
+# 3. Allow reasonable time for response (90 days)
+#
+# ## Scope
+#
+# - TrustShield API (api.trustshield.in)
+# - TrustShield Web Application (trustshield.in)
+# - TrustShield Mobile SDKs
+#
+# ## Out of Scope
+#
+# - Social engineering
+# - Physical attacks
+# - Denial of service attacks
+#
+# ## Safe Harbor
+#
+# We support safe harbor for security researchers who:
+# - Make a good faith effort to avoid privacy violations
+# - Only interact with accounts you own or with explicit permission
+# - Do not exploit a vulnerability beyond what is necessary to confirm it exists

@@ -1,0 +1,4 @@
+# Intentional test fixtures — false positives from gitleaks
+# Format: file:line reason
+backend/tests/conftest.py:.*sample.*test.*fixture
+backend/tests/unit/test_classifier.py:.*mock.*key

@@ -1,0 +1,383 @@
+[
+  {
+    "test_id": "1.1",
+    "description": "POST /auth/register (new user)",
+    "http_status": 201,
+    "response": {
+      "id": 3,
+      "email": "skiptest@test.com",
+      "full_name": "Skip Test",
+      "role": "analyst",
+      "org_name": null,
+      "is_active": true
+    }
+  },
+  {
+    "test_id": "1.2",
+    "description": "POST /auth/register (duplicate)",
+    "http_status": 400,
+    "response": {
+      "detail": "Email already registered"
+    }
+  },
+  {
+    "test_id": "1.3",
+    "description": "POST /auth/login (valid credentials)",
+    "http_status": 200,
+    "response": {
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZW1haWwiOiJza2lwdGVzdEB0ZXN0LmNvbSIsInJvbGUiOiJhbmFseXN0IiwiZXhwIjoxNzgxOTUzNDI0LCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiZTcyMTNjMzUtYzg5MC00OGFhLTg4OGEtMjAwNTQ2ZjU0ZDE0IiwidG9rZW5fdmVyc2lvbiI6MX0.uWTTH70LMFhbQGHMgkzMiyVztJcq7ZZiRWebhZEzyco",
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzgyNTU3MzI0LCJ0eXBlIjoicmVmcmVzaCIsImp0aSI6IjQwMmYyNDVhLWFkZTktNDU2My1hZGE3LTFmNmMzZjBmMjlhZiIsImZhbWlseSI6IjNhZGJlOGZhLWY5ZTctNGRlNC1hNTdmLWI4YjM5MTVlYzdhNCJ9.e6WEU-dHpFlnuz0DQrD2DhV4Hjns4racG8_-Dg9Zn-A",
+      "token_type": "bearer"
+    }
+  },
+  {
+    "test_id": "1.4",
+    "description": "POST /auth/login (bad password)",
+    "http_status": 401,
+    "response": {
+      "detail": "Invalid email or password"
+    }
+  },
+  {
+    "test_id": "1.5",
+    "description": "GET /auth/me (with token)",
+    "http_status": 200,
+    "response": {
+      "id": 3,
+      "email": "skiptest@test.com",
+      "full_name": "Skip Test",
+      "role": "analyst",
+      "org_name": null,
+      "is_active": true
+    }
+  },
+  {
+    "test_id": "1.6",
+    "description": "GET /auth/me (no auth)",
+    "http_status": 401,
+    "response": {
+      "detail": "Missing authentication token"
+    }
+  },
+  {
+    "test_id": "1.7",
+    "description": "POST /auth/refresh (invalid token)",
+    "http_status": 401,
+    "response": {
+      "detail": "Invalid refresh token"
+    }
+  },
+  {
+    "test_id": "1.7b",
+    "description": "POST /auth/refresh (valid token)",
+    "http_status": 200,
+    "response": {
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZW1haWwiOiJza2lwdGVzdEB0ZXN0LmNvbSIsInJvbGUiOiJhbmFseXN0IiwiZXhwIjoxNzgxOTUzNDM1LCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiYThmMDI0ZjctYTczOC00N2E0LWIyMjUtMTJkM2MzNTBmY2E5IiwidG9rZW5fdmVyc2lvbiI6MX0.GDDmAlCNSVfWJ_W2zCyna3J_MVksmFwRpLjUaDcWRFY",
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzgyNTU3MzM1LCJ0eXBlIjoicmVmcmVzaCIsImp0aSI6IjU4YzY5MzMwLTc2MmEtNDVjZS04MDk4LTc0YWJlMTZiMWViMSIsImZhbWlseSI6IjNhZGJlOGZhLWY5ZTctNGRlNC1hNTdmLWI4YjM5MTVlYzdhNCJ9.noV4AapiF0MrN5mOjkbdDdx5b4VszxIUN5XVv6ob-6w",
+      "token_type": "bearer"
+    }
+  },
+  {
+    "test_id": "1.8a",
+    "description": "POST /auth/refresh (old token reuse — should revoke)",
+    "http_status": 401,
+    "response": {
+      "detail": "Refresh token reuse detected — session revoked"
+    }
+  },
+  {
+    "test_id": "1.8",
+    "description": "POST /auth/refresh (token reuse detection)",
+    "http_status": 401,
+    "response": {
+      "detail": "Invalid refresh token"
+    }
+  },
+  {
+    "test_id": "1.9",
+    "description": "POST /auth/logout",
+    "http_status": 200,
+    "response": {
+      "message": "Logged out"
+    }
+  },
+  {
+    "test_id": "1.10",
+    "description": "GET /auth/me (after logout/no auth)",
+    "http_status": 401,
+    "response": {
+      "detail": "Missing authentication token"
+    }
+  },
+  {
+    "test_id": "2.1",
+    "description": "POST /analyze (scam text)",
+    "http_status": 200,
+    "response": {
+      "session_id": "skipped-test-1781952545",
+      "risk_score": 15,
+      "risk_level": "LOW",
+      "recommended_action": "NONE",
+      "flagged_entities": [
+        {
+          "entity_type": "PHONE",
+          "value": "9876543210",
+          "start_char": 10,
+          "end_char": 20,
+          "confidence_score": 0.9
+        }
+      ],
+      "warning_message_en": "CAUTION: Suspicious banking-related content detected. Verify the sender independently. Detected: PHONE.",
+      "warning_message_hi": "SAVDHAN: Sandehjanak banking samagri mili hai. Bhejne wale ko swayam verify karein.",
+      "intervention_type": "NONE"
+    }
+  },
+  {
+    "test_id": "2.7",
+    "description": "POST /batch/analyze",
+    "http_status": 404,
+    "response": {
+      "detail": "Not Found"
+    }
+  },
+  {
+    "test_id": "9.1",
+    "description": "POST /analyze (no 429 after 12 reqs, all statuses: [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200])",
+    "http_status": "OK",
+    "response": "Rate limit not triggered — may be configured higher"
+  },
+  {
+    "test_id": "9.2a",
+    "description": "GET /auth/me with expired JWT (Bearer)",
+    "http_status": 401,
+    "response": {
+      "detail": "Invalid or expired token"
+    }
+  },
+  {
+    "test_id": "9.2b",
+    "description": "GET /auth/me with expired JWT (cookie)",
+    "http_status": 401,
+    "response": {
+      "detail": "Invalid or expired token"
+    }
+  },
+  {
+    "test_id": "9.6a",
+    "description": "GET /analytics/dashboard (no X-Tenant-Id)",
+    "http_status": 200,
+    "response": {
+      "total_scans_today": 89,
+      "flagged_sessions": 4,
+      "entities_blacklisted": 2,
+      "false_positive_rate": 0.0,
+      "risk_distribution": {
+        "low": 1,
+        "medium": 1,
+        "high": 0,
+        "critical": 0,
+        "total": 2
+      },
+      "scam_type_breakdown": [
+        {
+          "scam_type": "vishing",
+          "count": 1,
+          "percentage": 50.0
+        },
+        {
+          "scam_type": "phishing",
+          "count": 1,
+          "percentage": 50.0
+        }
+      ],
+      "top_entities": [
+        {
+          "entity_value": "PHONE:+919999999999",
+          "entity_type": "PHONE",
+          "report_count": 3,
+          "scam_type": "vishing",
+          "risk_level": "medium"
+        },
+        {
+          "entity_value": "UPI:test@upi",
+          "entity_type": "UPI",
+          "report_count": 1,
+          "scam_type": "phishing",
+          "risk_level": "low"
+        }
+      ],
+      "contributing_factors": [
+        {
+          "factor": "NLP Classifier Confidence",
+          "weight": 0.35,
+          "description": "Keyword and pattern matching confidence from the scam classifier"
+        },
+        {
+          "factor": "High-Risk Entity Presence",
+          "weight": 0.25,
+          "description": "Detection of remote access tools (AnyDesk, TeamViewer), shortlinks, or APKs"
+        },
+        {
+          "factor": "Contact Initiation Direction",
+          "weight": 0.2,
+          "description": "Whether the contact was initiated by an unknown sender"
+        },
+        {
+          "factor": "Prior Fraud Reports",
+          "weight": 0.2,
+          "description": "Number of independent fraud reports against this entity"
+        }
+      ],
+      "temporal_trend": [
+        {
+          "date": "2026-06-14",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-15",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-16",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-17",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-18",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-19",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-20",
+          "reports": 4,
+          "confirmed": 1
+        }
+      ]
+    }
+  },
+  {
+    "test_id": "9.6b",
+    "description": "GET /analytics/dashboard (fake X-Tenant-Id)",
+    "http_status": 200,
+    "response": {
+      "total_scans_today": 89,
+      "flagged_sessions": 4,
+      "entities_blacklisted": 2,
+      "false_positive_rate": 0.0,
+      "risk_distribution": {
+        "low": 1,
+        "medium": 1,
+        "high": 0,
+        "critical": 0,
+        "total": 2
+      },
+      "scam_type_breakdown": [
+        {
+          "scam_type": "vishing",
+          "count": 1,
+          "percentage": 50.0
+        },
+        {
+          "scam_type": "phishing",
+          "count": 1,
+          "percentage": 50.0
+        }
+      ],
+      "top_entities": [
+        {
+          "entity_value": "PHONE:+919999999999",
+          "entity_type": "PHONE",
+          "report_count": 3,
+          "scam_type": "vishing",
+          "risk_level": "medium"
+        },
+        {
+          "entity_value": "UPI:test@upi",
+          "entity_type": "UPI",
+          "report_count": 1,
+          "scam_type": "phishing",
+          "risk_level": "low"
+        }
+      ],
+      "contributing_factors": [
+        {
+          "factor": "NLP Classifier Confidence",
+          "weight": 0.35,
+          "description": "Keyword and pattern matching confidence from the scam classifier"
+        },
+        {
+          "factor": "High-Risk Entity Presence",
+          "weight": 0.25,
+          "description": "Detection of remote access tools (AnyDesk, TeamViewer), shortlinks, or APKs"
+        },
+        {
+          "factor": "Contact Initiation Direction",
+          "weight": 0.2,
+          "description": "Whether the contact was initiated by an unknown sender"
+        },
+        {
+          "factor": "Prior Fraud Reports",
+          "weight": 0.2,
+          "description": "Number of independent fraud reports against this entity"
+        }
+      ],
+      "temporal_trend": [
+        {
+          "date": "2026-06-14",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-15",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-16",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-17",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-18",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-19",
+          "reports": 0,
+          "confirmed": 0
+        },
+        {
+          "date": "2026-06-20",
+          "reports": 4,
+          "confirmed": 1
+        }
+      ]
+    }
+  },
+  {
+    "test_id": "9.6c",
+    "description": "GET /hotspots (no X-Tenant-Id)",
+    "http_status": 404,
+    "response": {
+      "detail": "Not Found"
+    }
+  }
+]

@@ -1,0 +1,46 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "title": "Billing Quota Denials by Plan",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(billing_quota_denied_total[5m])",
+          "legendFormat": "{{plan}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Stripe Webhook Events",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(stripe_webhook_total[5m])",
+          "legendFormat": "{{event_type}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Billing Meter Lag",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "billing_meter_lag_seconds",
+          "legendFormat": "lag",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["trustshield", "billing"],
+  "title": "TrustShield Billing",
+  "uid": "trustshield-billing"
+}

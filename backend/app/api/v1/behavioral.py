@@ -1,24 +1,17 @@
-"""Behavioral Biometrics endpoint.
+"""Behavioral Biometrics endpoint — stores signals + computes risk."""
 
-Collects and analyzes behavioral signals from the Android SDK:
-- Typing speed changes during conversation
-- Copy-paste of OTPs or sensitive data
-- App switching patterns (payment app <-> messaging app)
-- Screen recording / accessibility service detection
-- Hesitation patterns (long pauses before action)
-
-These signals are combined into a behavioral risk score that
-supplements the NLP-based risk assessment.
-"""
-
+import json
 import logging
 import time
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import verify_api_key
+from app.database import get_async_db
+from app.models.behavioral_signal import BehavioralSignal as BehavioralSignalDB
 
 logger = logging.getLogger(__name__)
 
@@ -169,17 +162,29 @@ def _compute_behavioral_risk(
 async def analyze_behavioral_signals(
     request: BehavioralAnalysisRequest,
     _: bool = Depends(verify_api_key),
+    db: AsyncSession = Depends(get_async_db),
 ) -> BehavioralAnalysisResponse:
     """Analyze behavioral signals from the Android SDK.
 
-    Collects signals like typing speed changes, OTP copy-paste events,
-    app switching patterns, and overlay detection. Returns a behavioral
-    risk score that supplements the NLP-based assessment.
+    Stores signals in DB for model training and returns risk assessment.
     """
     start_time = time.time()
 
     try:
         risk_score, high_risk = _compute_behavioral_risk(request.signals)
+
+        # Persist signals to database
+        for signal in request.signals:
+            db_signal = BehavioralSignalDB(
+                session_id=request.session_id,
+                signal_type=signal.signal_type,
+                value=signal.value,
+                device_fingerprint=request.device_fingerprint,
+                metadata_json=json.dumps(signal.metadata) if signal.metadata else None,
+                timestamp=signal.timestamp,
+            )
+            db.add(db_signal)
+        await db.commit()
 
         # Generate recommendation
         if risk_score >= 0.7:
