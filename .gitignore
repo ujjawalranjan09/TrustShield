@@ -43,6 +43,8 @@ nul
 # Logs
 *.log
 logs/
+server.log
+server.err
 
 # Environment variables
 .env
@@ -54,6 +56,7 @@ infra/.env
 *.db
 *.sqlite
 *.sqlite3
+trustshield.db.bak
 
 # ML models (large files)
 ml/artifacts/
@@ -75,7 +78,47 @@ node_modules/
 .next/
 out/
 build/
+frontend/tsconfig.tsbuildinfo
 
 # SDK
 *.apk
 *.aab
+
+# Generated artifacts
+rbi_report_mock.pdf
+
+# Internal tooling (AI coding assistants)
+.hermes/
+.mimocode/
+
+# Debug / test scripts (root level — not part of the app)
+check_db.py
+check_db_direct.py
+check_feedback_table.py
+check_schema.py
+create_user.py
+debug_login.py
+generate_dataset.py
+insert_user.py
+run_live_tests.py
+run_skipped_tests.py
+test_fixes.py
+test_login_direct.py
+test_pii.py
+
+# Test results and internal docs
+LIVE_TEST_RESULTS.json
+LIVE_TEST_RESULTS_SKIPPED.json
+LIVE_TEST_PLAN.md
+TEST_REPORT.md
+BUGFIX_LOG.md
+CODEBASE_REVIEW_CHECKLIST.md
+
+# Planning docs (internal — not part of the app)
+IMPROVEMENT_PLAN.md
+IMPROVEMENT_PLAN_2.md
+PHASE_B_PLAN.md
+PHASE_C_DETAILED.md
+PHASE_C_PLAN.md
+PHASE_D_PLAN.md
+PHASE_E_PLAN.md
