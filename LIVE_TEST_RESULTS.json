@@ -1,9 +1,9 @@
 {
   "scorecard": {
-    "pass": 39,
-    "fail": 2,
-    "degraded": 15,
-    "skip": 20
+    "pass": 54,
+    "fail": 0,
+    "degraded": 6,
+    "skip": 16
   },
   "results": {
     "0.1": {
@@ -46,7 +46,7 @@
       "desc": "GET /docs",
       "status": 200,
       "ok": true,
-      "body_preview": "<!DOCTYPE html>\n    <html>\n    <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link type=\"text/css\" rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/swagger-u",
+      "body_preview": "\n    <!DOCTYPE html>\n    <html>\n    <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link type=\"text/css\" rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/swag",
       "symbol": "[PASS]"
     },
     "0.7": {
@@ -64,7 +64,7 @@
       "desc": "GET /metrics",
       "status": 200,
       "ok": true,
-      "body_preview": "# HELP python_gc_objects_collected_total Objects collected during gc\n# TYPE python_gc_objects_collected_total counter\npython_gc_objects_collected_total{generation=\"0\"} 1395.0\npython_gc_objects_collect",
+      "body_preview": "# HELP python_gc_objects_collected_total Objects collected during gc\n# TYPE python_gc_objects_collected_total counter\npython_gc_objects_collected_total{generation=\"0\"} 0.0\npython_gc_objects_collected_",
       "symbol": "[PASS]"
     },
     "0.9": {
@@ -88,7 +88,7 @@
       "desc": "POST /auth/register",
       "status": 201,
       "ok": true,
-      "body_preview": "{\"id\":7,\"email\":\"test_17cffc2c@example.com\",\"full_name\":\"Test User\",\"role\":\"analyst\",\"org_name\":null,\"is_active\":true}",
+      "body_preview": "{\"id\":24,\"email\":\"test_30924b56@example.com\",\"full_name\":\"Test User\",\"role\":\"analyst\",\"org_name\":null,\"is_active\":true}",
       "symbol": "[PASS]"
     },
     "1.2": {
@@ -104,10 +104,10 @@
       "phase": "1",
       "num": "3",
       "desc": "POST /auth/login",
-      "status": 500,
-      "ok": false,
-      "body_preview": "{\"error\":\"InternalServerError\",\"detail\":\"An unexpected error occurred. Please try again later.\",\"code\":\"INTERNAL_ERROR\",\"trace_id\":\"bb2fa65f-21d1-484b-a2e9-5a5354386f5e\"}",
-      "symbol": "[DEGR]"
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"access_token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNCIsImVtYWlsIjoidGVzdF8zMDkyNGI1NkBleGFtcGxlLmNvbSIsInJvbGUiOiJhbmFseXN0IiwiZXhwIjoxNzgxOTc5NjU4LCJ0eXBlIjoiYWNjZXNzIiwidmVyIjoxLCJqdG",
+      "symbol": "[PASS]"
     },
     "1.4": {
       "phase": "1",
@@ -119,10 +119,13 @@
       "symbol": "[PASS]"
     },
     "1.5": {
-      "symbol": "[FAIL]",
+      "phase": "1",
+      "num": "5",
       "desc": "GET /auth/me (with cookie)",
-      "ok": false,
-      "note": "No cookies from login"
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"id\":24,\"email\":\"test_30924b56@example.com\",\"full_name\":\"Test User\",\"role\":\"analyst\",\"org_name\":null,\"is_active\":true}",
+      "symbol": "[PASS]"
     },
     "1.6": {
       "phase": "1",
@@ -134,28 +137,40 @@
       "symbol": "[PASS]"
     },
     "1.7": {
-      "symbol": "[DEGR]",
+      "phase": "1",
+      "num": "7",
       "desc": "POST /auth/refresh",
-      "ok": false,
-      "note": "No refresh token cookie"
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"access_token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNCIsImVtYWlsIjoidGVzdF8zMDkyNGI1NkBleGFtcGxlLmNvbSIsInJvbGUiOiJhbmFseXN0IiwiZXhwIjoxNzgxOTc5NjYxLCJ0eXBlIjoiYWNjZXNzIiwidmVyIjoxLCJqdG",
+      "symbol": "[PASS]"
     },
     "1.8": {
-      "symbol": "[SKIP]",
+      "phase": "1",
+      "num": "8",
       "desc": "Refresh reuse",
+      "status": 401,
       "ok": true,
-      "note": "Skipped"
+      "body_preview": "{\"detail\":\"Refresh token reuse detected \u2014 session revoked\"}",
+      "symbol": "[PASS]"
     },
     "1.9": {
-      "symbol": "[DEGR]",
+      "phase": "1",
+      "num": "9",
       "desc": "POST /auth/logout",
-      "ok": false,
-      "note": "No cookies"
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"message\":\"Logged out\"}",
+      "symbol": "[PASS]"
     },
     "1.10": {
-      "symbol": "[SKIP]",
+      "phase": "1",
+      "num": "10",
       "desc": "Post-logout /auth/me",
+      "status": 401,
       "ok": true,
-      "note": "Skipped"
+      "body_preview": "{\"detail\":\"Token has been revoked\"}",
+      "symbol": "[PASS]"
     },
     "2.1": {
       "phase": "2",
@@ -163,7 +178,7 @@
       "desc": "POST /analyze scam",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"session_id\":\"sess-b5fe27e3\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"WARNING: This message contains suspicious OTP-relate",
+      "body_preview": "{\"session_id\":\"sess-3481a89d\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"WARNING: This message contains suspicious OTP-relate",
       "symbol": "[PASS]"
     },
     "2.2": {
@@ -172,7 +187,7 @@
       "desc": "POST /analyze clean",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"session_id\":\"sess-b4bf8a7c\",\"risk_score\":3,\"risk_level\":\"LOW\",\"recommended_action\":\"NONE\",\"flagged_entities\":[],\"warning_message_en\":\"\",\"warning_message_hi\":\"\",\"intervention_type\":\"NONE\"}",
+      "body_preview": "{\"session_id\":\"sess-6ed874f0\",\"risk_score\":3,\"risk_level\":\"LOW\",\"recommended_action\":\"NONE\",\"flagged_entities\":[],\"warning_message_en\":\"This message appears to be legitimate. However, always stay vigi",
       "symbol": "[PASS]"
     },
     "2.3": {
@@ -181,7 +196,7 @@
       "desc": "Bilingual warning",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"session_id\":\"sess-8b4ee9e3\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"WARNING: This message contains suspicious OTP-relate",
+      "body_preview": "{\"session_id\":\"sess-87aad1e4\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"WARNING: This message contains suspicious OTP-relate",
       "symbol": "[PASS]"
     },
     "2.4": {
@@ -190,7 +205,7 @@
       "desc": "Missing auth /analyze",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"session_id\":\"sess-b5fe27e3\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"WARNING: This message contains suspicious OTP-relate",
+      "body_preview": "{\"session_id\":\"sess-3481a89d\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"WARNING: This message contains suspicious OTP-relate",
       "symbol": "[PASS]"
     },
     "2.5": {
@@ -208,7 +223,7 @@
       "desc": "POST /scan-message",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"result\":{\"is_scam\":false,\"confidence\":0.12,\"scam_type\":\"unknown\",\"risk_level\":\"LOW\",\"risk_score\":22,\"flagged_entities\":[],\"warning_message_en\":null,\"warning_message_hi\":null,\"recommendation\":\"This m",
+      "body_preview": "{\"result\":{\"is_scam\":false,\"confidence\":0.12,\"scam_type\":\"unknown\",\"risk_level\":\"LOW\",\"risk_score\":22,\"flagged_entities\":[],\"warning_message_en\":\"This message appears to be legitimate. However, always",
       "symbol": "[PASS]"
     },
     "2.7": {
@@ -217,7 +232,7 @@
       "desc": "POST /analyze/batch",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"total\":1,\"processed\":1,\"failed\":0,\"results\":[{\"session_id\":\"sess-83eba4d8\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"Pleas",
+      "body_preview": "{\"total\":1,\"processed\":1,\"failed\":0,\"results\":[{\"session_id\":\"sess-b1e24b68\",\"risk_score\":40,\"risk_level\":\"MEDIUM\",\"recommended_action\":\"SOFT_WARNING\",\"flagged_entities\":[],\"warning_message_en\":\"Pleas",
       "symbol": "[PASS]"
     },
     "2.8": {
@@ -231,7 +246,7 @@
     },
     "2.9": {
       "symbol": "[PASS]",
-      "desc": "/analyze latency (267ms)",
+      "desc": "/analyze latency (32ms)",
       "ok": true,
       "note": null
     },
@@ -245,10 +260,10 @@
       "phase": "3",
       "num": "1",
       "desc": "POST /report",
-      "status": 200,
-      "ok": false,
-      "body_preview": "{\"report_id\":\"320264b2-4956-49e2-8407-69e6e93e7964\",\"status\":\"confirmed\",\"message\":\"Report submitted. Entity has 4 report(s). Status: confirmed\"}",
-      "symbol": "[DEGR]"
+      "status": 201,
+      "ok": true,
+      "body_preview": "{\"report_id\":\"902bc487-e254-4c67-896b-fca8873614fa\",\"status\":\"confirmed\",\"message\":\"Report submitted. Entity has 10 report(s). Status: confirmed\"}",
+      "symbol": "[PASS]"
     },
     "3.2": {
       "phase": "3",
@@ -274,7 +289,7 @@
       "desc": "GET /analytics/dashboard",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"total_scans_today\":97,\"flagged_sessions\":5,\"entities_blacklisted\":2,\"false_positive_rate\":0.0,\"risk_distribution\":{\"low\":1,\"medium\":1,\"high\":0,\"critical\":0,\"total\":2},\"scam_type_breakdown\":[{\"scam_t",
+      "body_preview": "{\"total_scans_today\":145,\"flagged_sessions\":19,\"entities_blacklisted\":6,\"false_positive_rate\":0.0,\"risk_distribution\":{\"low\":3,\"medium\":2,\"high\":0,\"critical\":1,\"total\":6},\"scam_type_breakdown\":[{\"scam",
       "symbol": "[PASS]"
     },
     "3.5": {
@@ -298,7 +313,7 @@
       "desc": "POST /feedback",
       "status": 201,
       "ok": true,
-      "body_preview": "{\"id\":5,\"message\":\"Feedback recorded. Thank you.\"}",
+      "body_preview": "{\"id\":11,\"message\":\"Feedback recorded. Thank you.\"}",
       "symbol": "[PASS]"
     },
     "3.8": {
@@ -307,29 +322,35 @@
       "desc": "GET /feedback/stats",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"total_feedback\":5,\"true_positives\":4,\"false_positives\":0,\"false_negatives\":1,\"false_positive_rate\":0.0}",
+      "body_preview": "{\"total_feedback\":11,\"true_positives\":10,\"false_positives\":0,\"false_negatives\":1,\"false_positive_rate\":0.0}",
       "symbol": "[PASS]"
     },
     "4.1": {
       "phase": "4",
       "num": "1",
       "desc": "POST /recovery/initiate",
-      "status": 200,
-      "ok": false,
-      "body_preview": "{\"case_id\":\"11df03d8-bc70-4d08-bf1e-138181ace628\",\"fraud_type\":\"upi_fraud\",\"amount_lost\":25000.0,\"steps\":[{\"step_number\":1,\"title\":\"Raise Dispute in UPI App\",\"description\":\"Open UPI app, raise transac",
-      "symbol": "[DEGR]"
+      "status": 201,
+      "ok": true,
+      "body_preview": "{\"case_id\":\"ca2c39e4-2876-4445-95b4-041041944a74\",\"fraud_type\":\"upi_fraud\",\"amount_lost\":25000.0,\"steps\":[{\"step_number\":1,\"title\":\"Raise Dispute in UPI App\",\"description\":\"Open UPI app, raise transac",
+      "symbol": "[PASS]"
     },
     "4.2": {
-      "symbol": "[SKIP]",
+      "phase": "4",
+      "num": "2",
       "desc": "GET /recovery/{id}",
+      "status": 200,
       "ok": true,
-      "note": "No recovery ID"
+      "body_preview": "{\"case_id\":\"ca2c39e4-2876-4445-95b4-041041944a74\",\"current_step\":1,\"total_steps\":6,\"status\":\"in_progress\",\"last_updated\":\"2026-06-20T17:51:13.919309\"}",
+      "symbol": "[PASS]"
     },
     "4.3": {
-      "symbol": "[SKIP]",
+      "phase": "4",
+      "num": "3",
       "desc": "PATCH /recovery/{id}",
-      "ok": true,
-      "note": "No recovery ID"
+      "status": 422,
+      "ok": false,
+      "body_preview": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"current_step\"],\"msg\":\"Field required\",\"input\":{\"status\":\"in_progress\",\"notes\":\"Updated by test runner\"}}]}",
+      "symbol": "[DEGR]"
     },
     "4.4": {
       "symbol": "[SKIP]",
@@ -347,28 +368,28 @@
       "phase": "4",
       "num": "6",
       "desc": "GET /compliance/attestation/{quarter}",
-      "status": 401,
+      "status": 403,
       "ok": false,
-      "body_preview": "{\"detail\":\"Missing authentication token\"}",
+      "body_preview": "{\"detail\":\"Insufficient permissions. Required: admin\"}",
       "symbol": "[DEGR]"
     },
     "4.7": {
       "phase": "4",
       "num": "7",
       "desc": "GET /dpdp/data-request",
-      "status": 401,
-      "ok": false,
-      "body_preview": "{\"detail\":\"Missing authentication token\"}",
-      "symbol": "[DEGR]"
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"status\":\"success\",\"message\":\"Data export complete. In production, this returns user-specific data.\",\"summary\":{\"total_scans\":145,\"total_recovery_cases\":17,\"total_feedback_labels\":11}}",
+      "symbol": "[PASS]"
     },
     "4.8": {
       "phase": "4",
       "num": "8",
       "desc": "POST /dpdp/erasure-request",
-      "status": 401,
-      "ok": false,
-      "body_preview": "{\"detail\":\"Missing authentication token\"}",
-      "symbol": "[DEGR]"
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"status\":\"completed\",\"message\":\"User data erasure request recorded. In production, this anonymizes only the requesting user's data.\",\"anonymized_fields\":[],\"cases_affected\":0}",
+      "symbol": "[PASS]"
     },
     "4.9": {
       "phase": "4",
@@ -383,36 +404,36 @@
       "phase": "5",
       "num": "1",
       "desc": "GET /graph/visualize",
-      "status": 401,
-      "ok": false,
-      "body_preview": "{\"detail\":\"Missing authentication token\"}",
-      "symbol": "[DEGR]"
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"nodes\":[],\"edges\":[]}",
+      "symbol": "[PASS]"
     },
     "5.2": {
       "phase": "5",
       "num": "2",
-      "desc": "GET /graph/neighborhood",
-      "status": 404,
-      "ok": false,
-      "body_preview": "{\"detail\":\"Not Found\"}",
-      "symbol": "[DEGR]"
+      "desc": "GET /graph/entity/{type}/{value}",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"center\":{\"id\":\"94b8eff5a1178eaa\",\"label\":\"suspicious@upi\",\"risk\":0.0,\"entity_type\":\"PHONE\",\"ring_id\":null,\"report_count\":0,\"propagated_risk\":0.0},\"nodes\":[],\"edges\":[],\"ring_memberships\":[],\"direct_",
+      "symbol": "[PASS]"
     },
     "5.3": {
       "phase": "5",
       "num": "3",
-      "desc": "GET /graph/shortest-path",
-      "status": 404,
-      "ok": false,
-      "body_preview": "{\"detail\":\"Not Found\"}",
-      "symbol": "[DEGR]"
+      "desc": "GET /graph/path",
+      "status": 200,
+      "ok": true,
+      "body_preview": "{\"found\":false,\"path_length\":0,\"nodes\":[],\"edges\":[]}",
+      "symbol": "[PASS]"
     },
     "5.4": {
       "phase": "5",
       "num": "4",
       "desc": "POST /intel/register-bank",
-      "status": 400,
+      "status": 200,
       "ok": false,
-      "body_preview": "{\"detail\":\"Bank code 'TEST01' already registered\"}",
+      "body_preview": "{\"bank_id\":\"6b70596f-2d33-49e9-80df-eeae3dd66c6b\",\"bank_name\":\"Test Bank\",\"api_key\":\"ts_bank_nVcTwoaHaD01CXy-5f88RB6tr9JCljoNS6XGBmHvunE\",\"message\":\"Bank registered successfully. Store the API key sec",
       "symbol": "[DEGR]"
     },
     "5.5": {
@@ -454,7 +475,7 @@
       "desc": "POST /behavioral-signal",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"session_id\":\"sess-47dc9c78\",\"result\":{\"behavioral_risk_score\":0.25,\"signals_analyzed\":1,\"high_risk_signals\":[\"otp_copy_paste\"],\"recommendation\":\"Low behavioral risk. Some minor anomalies detected bu",
+      "body_preview": "{\"session_id\":\"sess-26dc79cf\",\"result\":{\"behavioral_risk_score\":0.25,\"signals_analyzed\":1,\"high_risk_signals\":[\"otp_copy_paste\"],\"recommendation\":\"Low behavioral risk. Some minor anomalies detected bu",
       "symbol": "[PASS]"
     },
     "6.4": {
@@ -463,7 +484,7 @@
       "desc": "POST /explain",
       "status": 200,
       "ok": true,
-      "body_preview": "{\"text\":\"Why is this a scam?\",\"matched_keywords\":[],\"detected_entities\":[],\"model_attributions\":[],\"total_factors\":0}",
+      "body_preview": "{\"text\":\"Why is this a scam?\",\"redacted\":false,\"matched_keywords\":[],\"detected_entities\":[],\"model_attributions\":[],\"total_factors\":0}",
       "symbol": "[PASS]"
     },
     "6.5": {
@@ -471,9 +492,9 @@
       "num": "5",
       "desc": "PII redaction",
       "status": 200,
-      "ok": false,
-      "body_preview": "{\"text\":\"My Aadhaar is 1234-5678-9012\",\"matched_keywords\":[],\"detected_entities\":[],\"model_attributions\":[],\"total_factors\":0}",
-      "symbol": "[FAIL]"
+      "ok": true,
+      "body_preview": "{\"text\":\"My Aadhaar is [AADHAAR_REDACTED]\",\"redacted\":true,\"matched_keywords\":[],\"detected_entities\":[],\"model_attributions\":[],\"total_factors\":0}",
+      "symbol": "[PASS]"
     },
     "7.1": {
       "symbol": "[SKIP]",
@@ -523,7 +544,7 @@
       "desc": "GET /metrics after traffic",
       "status": 200,
       "ok": true,
-      "body_preview": "# HELP python_gc_objects_collected_total Objects collected during gc\n# TYPE python_gc_objects_collected_total counter\npython_gc_objects_collected_total{generation=\"0\"} 5356.0\npython_gc_objects_collect",
+      "body_preview": "# HELP python_gc_objects_collected_total Objects collected during gc\n# TYPE python_gc_objects_collected_total counter\npython_gc_objects_collected_total{generation=\"0\"} 0.0\npython_gc_objects_collected_",
       "symbol": "[PASS]"
     },
     "8.2": {
@@ -565,7 +586,7 @@
       "desc": "Expired/bad token",
       "status": 401,
       "ok": true,
-      "body_preview": "{\"detail\":\"Invalid or expired token\"}",
+      "body_preview": "{\"detail\":\"Malformed authentication token\"}",
       "symbol": "[PASS]"
     },
     "9.3": {
@@ -574,7 +595,7 @@
       "desc": "Malformed JWT",
       "status": 401,
       "ok": true,
-      "body_preview": "{\"detail\":\"Invalid or expired token\"}",
+      "body_preview": "{\"detail\":\"Malformed authentication token\"}",
       "symbol": "[PASS]"
     },
     "9.4": {

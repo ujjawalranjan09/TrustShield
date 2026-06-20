@@ -79,8 +79,14 @@ print("  [PASS] 0.1 Redis ping (external)")
 RESULTS["0.2"] = {"symbol": "[DEGR]", "desc": "Alembic migrations", "ok": False, "note": "Migrations broken; used Base.metadata.create_all() instead"}
 print("  [DEGR] 0.2 Alembic migrations (broken; bootstrapped from models)")
 
-# 0.3 Boot backend
-status, body, ok = curl("GET", "/health", base=BASE)
+# 0.3 Boot backend — retry up to 3 times in case server is still starting
+status, body, ok = 0, "", False
+for attempt in range(3):
+    status, body, ok = curl("GET", "/health", base=BASE)
+    if status == 200:
+        break
+    import time
+    time.sleep(2)
 RESULTS["0.3"] = {"symbol": "[PASS]" if ok else "[FAIL]", "desc": "Backend boot", "ok": ok}
 print(f"  {'[PASS]' if ok else '[FAIL]'} 0.3 Backend boot (HTTP {status})")
 
@@ -163,8 +169,12 @@ else:
     RESULTS["1.5"] = {"symbol": "[FAIL]", "desc": "GET /auth/me (with cookie)", "ok": False, "note": "No cookies from login"}
     print("  [FAIL] 1.5 GET /auth/me (with cookie) -- no cookies from login")
 
-# 1.6 GET /auth/me without cookie
-status, body, ok = curl("GET", "/auth/me")
+# 1.6 GET /auth/me without cookie — use a fresh session to avoid shared cookies
+import requests as _req_fresh
+_fresh_session = _req_fresh.Session()
+_fresh_session.headers.update({"Content-Type": "application/json", "User-Agent": "TrustShield-LiveTest/1.0"})
+_r = _fresh_session.get(f"{API}/auth/me", timeout=15)
+status, body, ok = _r.status_code, _r.text, _r.status_code == 401
 check("1", "6", "GET /auth/me (no cookie)", status, body, ok, 401, lambda s, b: s == 401)
 
 # 1.7 Refresh token (endpoint takes body, not cookie)
@@ -192,9 +202,15 @@ else:
     RESULTS["1.9"] = {"symbol": "[DEGR]", "desc": "POST /auth/logout", "ok": False, "note": "No cookies"}
     print("  [DEGR] 1.9 POST /auth/logout -- no cookies")
 
-# 1.10 Post-logout /auth/me
+# 1.10 Post-logout /auth/me — clear session cookies to simulate cleared browser state
 if login_cookies:
-    status, body, ok = curl("GET", "/auth/me", cookies=login_cookies)
+    _cleared_session = _req_fresh.Session()
+    _cleared_session.headers.update({"Content-Type": "application/json", "User-Agent": "TrustShield-LiveTest/1.0"})
+    # Use the old (now-expired-by-logout) access token as a fresh session cookie
+    _cleared_session.cookies.set("ts_access_token", login_cookies.get("ts_access_token", ""))
+    _cleared_session.cookies.set("ts_refresh_token", login_cookies.get("ts_refresh_token", ""))
+    _r = _cleared_session.get(f"{API}/auth/me", timeout=15)
+    status, body, ok = _r.status_code, _r.text, _r.status_code == 401
     check("1", "10", "Post-logout /auth/me", status, body, ok, 401, lambda s, b: s == 401)
 else:
     RESULTS["1.10"] = {"symbol": "[SKIP]", "desc": "Post-logout /auth/me", "ok": True, "note": "Skipped"}
@@ -378,10 +394,10 @@ status, body, ok = curl("POST", "/recovery/initiate", recovery_payload)
 recovery_id = None
 if ok and status == 201:
     try:
-        recovery_id = json.loads(body).get("id") or json.loads(body).get("case_id")
+        recovery_id = json.loads(body).get("case_id")
     except:
         pass
-check("4", "1", "POST /recovery/initiate", status, body, ok, 201, lambda s, b: "id" in b or "case" in b.lower() or "plan" in b.lower())
+check("4", "1", "POST /recovery/initiate", status, body, ok, 201, lambda s, b: "case_id" in b or "plan" in b.lower())
 
 # 4.2 Get recovery case
 if recovery_id:
@@ -432,16 +448,18 @@ print("\n=== Phase 5 -- Graph & Intel ===")
 status, body, ok = curl("GET", "/graph/visualize?entity=suspicious@upi", cookies=login_cookies)
 check("5", "1", "GET /graph/visualize", status, body, ok, 200, lambda s, b: "nodes" in b and "edges" in b or "[]" in b)
 
-# 5.2 Graph neighborhood
-status, body, ok = curl("GET", "/graph/neighborhood/suspicious%40upi", cookies=login_cookies)
-check("5", "2", "GET /graph/neighborhood", status, body, ok, 200, lambda s, b: "nodes" in b or "edges" in b or "[]" in b)
+# 5.2 Graph entity neighborhood (correct path: /graph/entity/{type}/{value})
+status, body, ok = curl("GET", "/graph/entity/PHONE/suspicious%40upi", cookies=login_cookies)
+check("5", "2", "GET /graph/entity/{type}/{value}", status, body, ok, 200, lambda s, b: "nodes" in b or "edges" in b or "center" in b or "[]" in b)
 
-# 5.3 Shortest path
-status, body, ok = curl("GET", "/graph/shortest-path?source=A&target=B", cookies=login_cookies)
-check("5", "3", "GET /graph/shortest-path", status, body, ok, 200, lambda s, b: "nodes" in b or "edges" in b or "path" in b.lower() or "[]" in b)
+# 5.3 Shortest path (correct path: /graph/path)
+status, body, ok = curl("GET", "/graph/path?from_type=PHONE&from_value=suspicious%40upi&to_type=VPA&to_value=fraud%40upi", cookies=login_cookies)
+check("5", "3", "GET /graph/path", status, body, ok, 200, lambda s, b: "nodes" in b or "edges" in b or "found" in b or "[]" in b)
 
 # 5.4 Intel register (actual path is /intel/register-bank)
-status, body, ok = curl("POST", "/intel/register-bank", {"bank_name": "Test Bank", "bank_code": "TEST01", "contact_email": "ops@testbank.com", "contact_name": "Test Contact"})
+import time as _time
+bank_code = f"TEST{int(_time.time()) % 100000:05d}"  # Unique bank code
+status, body, ok = curl("POST", "/intel/register-bank", {"bank_name": "Test Bank", "bank_code": bank_code, "contact_email": "ops@testbank.com", "contact_name": "Test Contact"})
 check("5", "4", "POST /intel/register-bank", status, body, ok, 201, lambda s, b: "api_key" in b.lower() or "key" in b.lower() or s == 201)
 
 # 5.5 Intel lookup (requires bank API key header X-API-Key)
@@ -527,12 +545,14 @@ rate_pass = ok or status == 429
 RESULTS["9.1"] = {"symbol": "[PASS]" if rate_pass else "[FAIL]", "desc": "Rate limit /analyze", "ok": rate_pass, "note": None if rate_pass else f"Unexpected status {status}"}
 print(f"  {'[PASS]' if rate_pass else '[FAIL]'} 9.1 Rate limit /analyze (HTTP {status})")
 
-# 9.2 Expired token -- use a bad JWT
-status, body, ok = curl("GET", "/auth/me", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxfQ.fake"})
+# 9.2 Expired token -- use a bad JWT (fresh session to avoid login cookie)
+_r = _fresh_session.get(f"{API}/auth/me", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxfQ.fake"}, timeout=15)
+status, body, ok = _r.status_code, _r.text, _r.status_code == 401
 check("9", "2", "Expired/bad token", status, body, ok, 401, lambda s, b: s == 401)
 
-# 9.3 Malformed JWT
-status, body, ok = curl("GET", "/auth/me", headers={"Authorization": "Bearer not-a-jwt"})
+# 9.3 Malformed JWT (fresh session)
+_r = _fresh_session.get(f"{API}/auth/me", headers={"Authorization": "Bearer not-a-jwt"}, timeout=15)
+status, body, ok = _r.status_code, _r.text, _r.status_code == 401
 check("9", "3", "Malformed JWT", status, body, ok, 401, lambda s, b: s == 401)
 
 # 9.4 Unknown route

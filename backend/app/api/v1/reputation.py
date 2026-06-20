@@ -33,6 +33,30 @@ class PublicReputationResponse(BaseModel):
     report_count_bucket: str
 
 
+@router.get("/reputation/{vpa:path}/widget")
+async def get_reputation_widget(vpa: str, db: AsyncSession = Depends(get_async_db)):
+    """Return SVG badge for VPA reputation."""
+    rep = await compute_reputation(vpa, "UPI", db)
+
+    if rep.get("reputation_tier") == "unknown" or rep.get("score", 0) == 0:
+        color, text = "#6b7280", "Unknown"
+    elif rep["score"] >= 80:
+        color, text = "#22c55e", f"Score: {rep['score']}"
+    elif rep["score"] >= 50:
+        color, text = "#f97316", f"Score: {rep['score']}"
+    else:
+        color, text = "#ef4444", f"Score: {rep['score']}"
+
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="120" height="28" viewBox="0 0 120 28">
+  <rect width="120" height="28" rx="6" fill="{color}" opacity="0.15"/>
+  <rect width="120" height="28" rx="6" fill="none" stroke="{color}" stroke-width="1.5"/>
+  <text x="60" y="18" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="{color}">{text}</text>
+</svg>'''
+
+    return Response(content=svg, media_type="image/svg+xml",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
 @router.get("/reputation/{vpa:path}/public", response_model=PublicReputationResponse)
 async def get_reputation_public(
     vpa: str,
@@ -59,27 +83,3 @@ async def get_reputation(
     except Exception as e:
         logger.error("Error getting reputation: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get reputation")
-
-
-@router.get("/reputation/{vpa:path}/widget")
-async def get_reputation_widget(vpa: str, db: AsyncSession = Depends(get_async_db)):
-    """Return SVG badge for VPA reputation."""
-    rep = await get_reputation(vpa, db)
-
-    if rep.risk_level == "unknown":
-        color, text = "#6b7280", "Unknown"
-    elif rep.score >= 80:
-        color, text = "#22c55e", f"Score: {rep.score}"
-    elif rep.score >= 50:
-        color, text = "#f97316", f"Score: {rep.score}"
-    else:
-        color, text = "#ef4444", f"Score: {rep.score}"
-
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="120" height="28" viewBox="0 0 120 28">
-  <rect width="120" height="28" rx="6" fill="{color}" opacity="0.15"/>
-  <rect width="120" height="28" rx="6" fill="none" stroke="{color}" stroke-width="1.5"/>
-  <text x="60" y="18" text-anchor="middle" font-family="Arial" font-size="12" font-weight="bold" fill="{color}">{text}</text>
-</svg>'''
-
-    return Response(content=svg, media_type="image/svg+xml",
-                    headers={"Cache-Control": "public, max-age=3600"})

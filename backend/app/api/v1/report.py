@@ -79,6 +79,7 @@ def _compute_risk_level(report_count: int) -> str:
 @router.post(
     "/report",
     response_model=ReportResponse,
+    status_code=201,
     responses={500: {"model": ErrorResponse}},
 )
 async def report_entity(

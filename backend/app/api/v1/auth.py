@@ -190,7 +190,7 @@ async def refresh(request: Request, payload: RefreshRequest, db: AsyncSession = 
 
     user_id = decoded.get("sub")
     token_jti = decoded.get("jti")
-    family_id = decoded.get("family")
+    family_id = decoded.get("family_id")
 
     if not user_id or not token_jti or not family_id:
         raise HTTPException(status_code=401, detail="Invalid token claims")
@@ -273,17 +273,26 @@ async def logout(request: Request, db: AsyncSession = Depends(get_async_db)):
     """Clear auth cookies and revoke tokens."""
     from starlette.responses import JSONResponse
 
-    # Try to revoke the current access token
+    # Try to revoke the current access token — check cookies AND Authorization header
     token = request.cookies.get("ts_access_token")
+    if not token:
+        # Fall back to Authorization header (Bearer token)
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+
     if token:
-        decoded = decode_token(token)
-        if decoded and decoded.get("jti") and decoded.get("sub"):
-            revoked = RevokedSession(
-                user_id=int(decoded["sub"]),
-                token_jti=decoded["jti"],
-                token_type="access",
-            )
-            db.add(revoked)
+        try:
+            decoded = decode_token(token)
+            if decoded and decoded.get("jti") and decoded.get("sub"):
+                revoked = RevokedSession(
+                    user_id=int(decoded["sub"]),
+                    token_jti=decoded["jti"],
+                    token_type="access",
+                )
+                db.add(revoked)
+        except Exception:
+            pass  # Token invalid or expired — nothing to revoke
 
     # Revoke all refresh tokens for this user
     refresh_token = request.cookies.get("ts_refresh_token")

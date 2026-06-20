@@ -97,7 +97,7 @@ Request investigation and appropriate action.
     })
 
 
-@router.post("/recovery/initiate", response_model=RecoveryPlan)
+@router.post("/recovery/initiate", response_model=RecoveryPlan, status_code=201)
 async def initiate_recovery(request: RecoveryRequest, db: AsyncSession = Depends(get_async_db)):
     case_id = str(uuid.uuid4())
     step_templates = RECOVERY_STEPS.get(request.fraud_type.value, DEFAULT_STEPS)
