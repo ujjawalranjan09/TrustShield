@@ -1,182 +1,209 @@
 # TrustShield
 
-**Real-time AI-powered fraud detection platform for UPI and digital payments**
+**Real-time AI-powered fraud detection platform for UPI and digital payments in India.**
 
-TrustShield is a comprehensive fraud detection system that analyzes chat conversations in real-time to identify and prevent financial scams. It leverages NLP, graph-based entity analysis, and risk scoring to provide intelligent interventions and compliance reporting.
+TrustShield analyzes chat conversations, voice calls, and images in real-time to detect and prevent financial scams. It protects 500M+ UPI users from vishing, OTP harvesting, refund scams, remote access exploitation, and social engineering attacks.
 
-## Overview
+---
 
-TrustShield protects users from various types of digital fraud including:
-- **Vishing** (Voice phishing)
-- **Fake Support** (impersonating customer support)
-- **Refund Scams** (QR code fraud, fake refund links)
-- **OTP Harvesting** (soliciting one-time passwords)
-- **Remote Access** (AnyDesk, TeamViewer exploitation)
+## Features
 
-## Architecture
+- **Real-time detection** — <300ms P95 latency for fraud classification
+- **Multi-modal analysis** — Text, voice (WebSocket), and image/QR scanning
+- **Bilingual warnings** — English + Hindi (Hinglish) intervention messages
+- **Graph intelligence** — Neo4j-powered fraud ring detection and risk propagation
+- **Explainability** — LLM-grounded RAG chat for "why was this flagged?" answers
+- **Intervention engine** — Soft warnings, hard blocks, transaction freezes, WhatsApp alerts
+- **Recovery workflow** — Step-by-step victim recovery with auto-complaint PDFs and 1930 submission
+- **Compliance** — RBI quarterly reports, DPDP data register, immutable audit chains
+- **Multi-tenancy** — Tenant isolation, SSO/SAML, SCIM provisioning, RBAC
+- **Billing** — Stripe metered billing with usage quotas and plan tiers
+- **Client SDKs** — Web (TypeScript), Android (Kotlin), iOS (Swift)
 
-### System Components
+---
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        TrustShield Platform                     │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │   Frontend   │  │   Backend    │  │   Android    │          │
-│  │  (Next.js)   │  │  (FastAPI)   │  │    SDK       │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│                         │                                         │
-│  ┌─────────────────────┴──────────────────────────────────────┐ │
-│  │                    Core Services                             │ │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │ │
-│  │  │    NLP       │  │   Graph      │  │ Intervention │      │ │
-│  │  │  Processing  │  │   Analysis   │  │   Engine     │      │ │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘      │ │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │ │
-│  │  │   Risk       │  │ Compliance   │  │   Workers    │      │ │
-│  │  │   Scoring    │  │   Reporting  │  │   (Celery)   │      │ │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘      │ │
-│  └──────────────────────────────────────────────────────────────┘ │
-│                         │                                         │
-│  ┌─────────────────────┴──────────────────────────────────────┐ │
-│  │                    Data Layer                                │ │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │ │
-│  │  │  PostgreSQL  │  │   Neo4j      │  │   Redis      │      │ │
-│  │  │  (Primary)   │  │  (Graph DB)  │  │  (Cache)     │      │ │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘      │ │
-│  │  ┌──────────────┐  ┌──────────────┐                         │ │
-│  │  │   Kafka      │  │   MinIO      │                         │ │
-│  │  │  (Events)    │  │  (Storage)   │                         │ │
-│  │  └──────────────┘  └──────────────┘                         │ │
-│  └──────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Technology Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | Next.js 14, TypeScript, React |
-| **Backend** | FastAPI, Python 3.11+ |
-| **Database** | PostgreSQL (with pgvector), Neo4j, Redis |
-| **Messaging** | Apache Kafka |
-| **Storage** | MinIO (object storage) |
-| **ML** | ONNX Runtime, MuRIL (multilingual model) |
-| **Deployment** | Docker, Docker Compose |
-| **Mobile SDK** | Android (Kotlin) |
+| **Backend** | Python 3.11+, FastAPI, SQLAlchemy 2.0 async, Pydantic v2 |
+| **Frontend** | Next.js 15, React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
+| **Database** | PostgreSQL (pgvector), Neo4j, Redis |
+| **Messaging** | Apache Kafka (production), Redis Streams (dev) |
+| **ML** | ONNX Runtime, MuRIL, XGBoost, keyword classifier fallback |
+| **Voice** | faster-whisper (local), Deepgram Nova-3 (cloud) |
+| **Auth** | JWT (httpOnly cookies), SAML SSO, OIDC, SCIM, RBAC |
+| **PII** | AES-256-GCM envelope encryption, AWS KMS, tokenization |
+| **Billing** | Stripe (metered, 4 tiers) |
+| **Observability** | OpenTelemetry, Prometheus, Sentry, Grafana |
+| **Deployment** | Docker, Kubernetes (Helm), Terraform, Argo CD |
 
-## Key Features
+---
 
-### 1. Real-time Analysis
-- **<300ms latency** SLA for fraud detection
-- Multi-language support (English, Hindi, Hinglish, mixed)
-- Session-based context tracking
+## Architecture
 
-### 2. NLP Processing Pipeline
 ```
-Input Text → Preprocessing → Entity Extraction → Scam Classification → Risk Scoring → Intervention
+                         ┌──────────────────────────────────────────────┐
+   Banks / SDK / Bot ──▶ │  Edge: Cloudflare WAF + mTLS + Rate-limit    │
+                         └──────────────────────┬───────────────────────┘
+                                                ▼
+                         ┌──────────────────────────────────────────────┐
+                         │  FastAPI (async) — 32 routers, 93 endpoints  │
+                         │  • analyze • scan • webhook • voice(WS)      │
+                         │  • explain • intel • recovery • behavioral   │
+                         └───┬───────────┬───────────┬──────────┬───────┘
+                             │           │           │          │
+                  ┌──────────▼──┐  ┌──────▼─────┐ ┌───▼────┐ ┌───▼────────┐
+                  │ NLP Service │  │ Graph Svc  │ │ Vector │ │ Feature    │
+                  │ (ONNX +     │  │ (Neo4j)    │ │(pgvec) │ │ Store      │
+                  │  keywords)  │  │            │ │        │ │            │
+                  └──────────┬──┘  └────────────┘ └────────┘ └────────────┘
+                             │
+                  ┌──────────▼──────────────────────────────────┐
+                  │ Redpanda (events) ─▶ Celery Workers          │
+                  │   • audit • alerts • graph-build • retrain   │
+                  └──────────┬──────────────────────────────────┘
+                             │
+        ┌────────────────────┼────────────────────┬──────────────┐
+        ▼                    ▼                    ▼              ▼
+   PostgreSQL 16       ClickHouse          Redis 7         S3 / MinIO
+   (asyncpg)           (analytics)         (cache)         (evidence)
 ```
 
-**Services:**
-- `TextPreprocessor`: Cleans and normalizes input text
-- `EntityExtractor`: Detects UPI IDs, phone numbers, remote access codes, IFSC codes, APK links
-- `ScamClassifier`: ONNX-based model with MuRIL for multilingual classification
-- `RiskScorer`: Multi-factor risk calculation (confidence, entities, context, history)
+---
 
-### 3. Graph-Based Analysis
-- Neo4j-powered entity relationship mapping
-- Fraud network visualization
-- Risk propagation analysis
-- Connected entity blacklisting
+## Project Structure
 
-### 4. Intervention Engine
-| Risk Level | Action | Description |
-|------------|--------|-------------|
-| LOW | NONE | No intervention |
-| MEDIUM | SOFT_WARNING | Display warning message |
-| HIGH | HARD_BLOCK | Block PIN entry temporarily |
-| CRITICAL | FREEZE_AND_REPORT | Freeze transaction, report to 1930 |
+```
+TrustShield/
+├── backend/                    # FastAPI Python backend
+│   ├── app/
+│   │   ├── api/v1/            # 32 API routers (93 endpoints)
+│   │   ├── models/            # 22 SQLAlchemy ORM models
+│   │   ├── schemas/           # Pydantic v2 request/response schemas
+│   │   ├── services/          # 20+ service packages
+│   │   ├── middleware/         # Audit, billing, tenant context, cell routing
+│   │   ├── workers/           # Celery tasks, Kafka consumer
+│   │   ├── utils/             # PII masking, regex patterns
+│   │   ├── auth.py            # JWT validation, RBAC dependencies
+│   │   ├── config.py          # pydantic-settings (~100 env vars)
+│   │   ├── database.py        # SQLAlchemy async/sync engines
+│   │   └── main.py            # FastAPI app, lifespan, router registration
+│   ├── ml/                    # ML training pipeline, ONNX export, drift monitoring
+│   ├── alembic/               # Database migrations
+│   └── tests/                 # Unit, integration, contract, load tests
+├── frontend/                   # Next.js 15 frontend
+│   ├── app/[locale]/           # i18n routes (EN/HI/TA/TE)
+│   ├── components/             # shadcn/ui components, AppShell, Sidebar
+│   ├── lib/                    # API client, auth context, utilities
+│   ├── messages/               # i18n translation files
+│   └── e2e/                    # Playwright E2E tests
+├── sdk/                        # Client SDKs
+│   ├── web/                    # TypeScript SDK (@trustshield/web-sdk)
+│   ├── android/                # Kotlin SDK (TrustShieldManager)
+│   └── ios/                    # Swift Package
+├── infra/                      # Infrastructure
+│   ├── docker-compose.yml      # 10-service dev stack
+│   ├── helm/trustshield/       # Kubernetes Helm chart
+│   ├── terraform/              # AWS modules (RDS, ElastiCache, KMS, S3)
+│   ├── dashboards/             # Grafana dashboards
+│   └── alerts/                 # Prometheus rules + Alertmanager
+├── docs/                       # Architecture, API guide, threat model
+└── scripts/                    # OpenAPI export, i18n lint
+```
 
-### 5. Compliance & Reporting
-- Automated RBI quarterly reports (PDF generation)
-- 1930 helpline integration for critical cases
-- Immutable audit trails to ELK stack
-- False positive rate monitoring
+---
 
-## Getting Started
+## Quick Start
 
 ### Prerequisites
+
 - Docker & Docker Compose
 - Python 3.11+
-- Node.js 18+ (for frontend)
-- Android Studio (for SDK development)
+- Node.js 18+
 
-### Quick Start
+### Development Stack
 
 ```bash
-# Clone the repository
-git clone <repository-url>
+# Clone and start all services
+git clone https://github.com/ujjawalranjan09/TrustShield.git
 cd TrustShield
-
-# Start the development stack
 make dev
 
-# The following services will be available:
-# - API: http://localhost:8000
-# - Frontend: http://localhost:3000
-# - Neo4j Browser: http://localhost:7474
-# - MinIO Console: http://localhost:9001
+# Services available at:
+# API:        http://localhost:8000
+# Frontend:   http://localhost:3000
+# Neo4j:      http://localhost:7474
+# MinIO:      http://localhost:9001
+# PgBouncer:  localhost:6432
 ```
 
 ### Manual Setup
 
 ```bash
-# Start infrastructure services
-cd infra
-docker-compose up -d postgres neo4j redis kafka minio
-
-# Start backend
-cd ../backend
+# Backend
+cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# Start frontend
-cd ../frontend
+# Frontend
+cd frontend
 npm install
 npm run dev
 
-# Start workers
-cd ../backend
+# Celery Workers
+cd backend
 celery -A app.workers.celery_app worker -l info
 ```
 
-## API Documentation
+---
 
-### Analyze Endpoint
+## API Overview
 
-**POST** `/api/v1/analyze`
+### Core Detection Endpoints
 
-**Request:**
-```json
-{
-  "messages": [
-    {
-      "sender": "agent",
-      "text": "Please share your AnyDesk ID 123456789"
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/analyze` | POST | JWT | Full NLP pipeline: chat → risk score → intervention |
+| `/api/v1/webhook/pre-transaction` | POST | API Key | Bank-side transaction pre-screening (<100ms) |
+| `/api/v1/scan-message` | POST | API Key | Stateless single-message scam scan |
+| `/api/v1/consumer/scan` | POST | None | Public consumer scanner (PWA/WhatsApp bot) |
+| `/api/v1/voice/analyze` | POST | API Key | Voice transcript vishing analysis |
+| `/api/v1/analyze-image` | POST | API Key | QR code and image fraud detection |
+| `/api/v1/behavioral-signal` | POST | API Key | Android SDK behavioral biometrics |
+| `/api/v1/analyze/batch` | POST | API Key | Batch analysis (up to 100 sessions) |
+
+### Intelligence & Graph
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/intel/register-bank` | POST | None | Register bank partner (returns API key) |
+| `/api/v1/intel/lookup` | POST | API Key | Cross-bank entity risk lookup |
+| `/api/v1/graph/visualize` | GET | JWT | Cytoscape-compatible graph JSON |
+| `/api/v1/graph/entity/{type}/{value}` | GET | Role | Entity neighborhood + ring membership |
+| `/api/v1/graph/path` | GET | Role | Shortest path between entities |
+
+### Example: Analyze Request
+
+```bash
+curl -X POST http://localhost:8000/api/v1/analyze \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"sender": "agent", "text": "Please share your AnyDesk ID 123456789"}],
+    "session_metadata": {
+      "client_app_id": "app_1",
+      "session_id": "sess_1",
+      "contact_initiated_by": "unknown",
+      "is_during_active_upi_session": true,
+      "user_device_hash": "hash1",
+      "prior_reports_for_sender": 2
     }
-  ],
-  "session_metadata": {
-    "client_app_id": "app_1",
-    "session_id": "sess_1",
-    "contact_initiated_by": "unknown",
-    "is_during_active_upi_session": true,
-    "user_device_hash": "hash1",
-    "prior_reports_for_sender": 2
-  }
-}
+  }'
 ```
 
-**Response:**
+### Example: Response
+
 ```json
 {
   "session_id": "sess_1",
@@ -184,13 +211,7 @@ celery -A app.workers.celery_app worker -l info
   "risk_level": "CRITICAL",
   "recommended_action": "FREEZE_AND_REPORT",
   "flagged_entities": [
-    {
-      "entity_type": "ANYDESK",
-      "value": "123456789",
-      "start_char": 32,
-      "end_char": 41,
-      "confidence_score": 0.99
-    }
+    {"entity_type": "ANYDESK", "value": "123456789", "confidence_score": 0.99}
   ],
   "warning_message_en": "Warning: High risk of fraud! We have disabled PIN entry temporarily.",
   "warning_message_hi": "Chetawani: Fraud ka khatra! PIN entry kuch samay ke liye block kar diya hai.",
@@ -198,81 +219,90 @@ celery -A app.workers.celery_app worker -l info
 }
 ```
 
-## Project Structure
+Full API documentation: `http://localhost:8000/docs` (Swagger UI)
 
-```
-TrustShield/
-├── backend/               # FastAPI backend application
-│   ├── app/              # Application code
-│   │   ├── api/          # API endpoints
-│   │   ├── models/       # Database models
-│   │   ├── schemas/      # Pydantic schemas
-│   │   ├── services/     # Business logic
-│   │   ├── utils/        # Utility functions
-│   │   └── workers/      # Background tasks
-│   ├── ml/               # Machine learning
-│   │   ├── data/         # Training data
-│   │   └── training/     # Data augmentation
-│   └── tests/            # Integration tests
-├── frontend/             # Next.js frontend application
-│   ├── app/              # Next.js app router pages
-│   └── components/       # React components
-├── infra/                # Infrastructure as code
-│   └── docker-compose.yml
-├── sdk/                  # Android SDK
-│   └── android/
-├── generate_dataset.py   # Dataset generator
-├── Makefile              # Development commands
-└── README.md
-```
+---
 
 ## Testing
 
 ```bash
-# Run integration tests
-make test
-
-# Or manually
+# Backend unit + integration tests
 cd backend
-PYTHONPATH=$(PWD)/backend pytest tests/integration/
+pytest tests/unit/ -v
+pytest tests/integration/ -v
+
+# Frontend unit tests
+cd frontend
+npm run test
+
+# E2E tests (Playwright)
+cd frontend
+npm run test:e2e
+
+# Load tests (k6)
+cd backend/tests/load
+k6 run k6_analyze.js
 ```
 
-## Development
+---
 
-### Data Augmentation
+## Deployment
+
+### Docker Compose (Development)
 
 ```bash
-# Generate augmented training data
-python generate_dataset.py
-cd backend/ml/training
-python augment_data.py
+make dev    # Start all 10 services
+make stop   # Stop all services
 ```
 
-### RBI Report Generation
+### Kubernetes (Production)
 
 ```bash
-# Generate quarterly compliance report
-python -m trustshield.backend.app.services.compliance.rbi_report_builder
+cd infra
+terraform apply -var-file=envs/prod.tfvars
+helm install trustshield helm/trustshield/ -f helm/trustshield/values.yaml
 ```
 
-## Monitoring & Observability
+### CI/CD
 
-- **Logs**: ELK stack integration via Kafka
-- **Metrics**: Custom metrics for risk scores, latency, false positives
-- **Graph Visualization**: Neo4j Browser at `http://localhost:7474`
-- **MinIO Console**: `http://localhost:9001`
+GitHub Actions pipeline with 13 jobs:
+- Gitleaks secret scanning
+- Ruff/ESLint linting
+- pytest unit + integration tests
+- Alembic migration validation
+- Grafana dashboard validation
+- Graph lifecycle tests
+- RAG grounding evaluation
+- i18n lint
+- Cross-tenant isolation suite
+- SDK parity checks (Web/Android/iOS)
 
-## Compliance
+---
 
-TrustShield helps organizations meet RBI fraud detection mandates:
-- Real-time fraud detection capability (<300ms latency)
-- Immutable audit trails
-- Entity blacklisting and reporting
-- 1930 helpline integration for critical cases
+## Security
+
+- **AuthN/Z**: JWT httpOnly cookies + rotating refresh tokens + SAML/OIDC SSO + RBAC/ABAC
+- **PII Protection**: AES-256-GCM envelope encryption (AWS KMS), HMAC tokenization, redaction at external boundaries
+- **Audit**: Hash-chain integrity verification, append-only logs
+- **Compliance**: DPDP Act data register, RBI quarterly reports, 1930 cybercrime submission
+- **Infrastructure**: mTLS, HMAC-signed webhooks, rate limiting, gitleaks + Trivy CI scanning
+
+---
+
+## Monitoring
+
+- **Grafana Dashboards**: Overview, billing, model performance, compliance, SLO
+- **Prometheus Alerts**: SLA burn, model drift, audit chain breaks, billing meter lag
+- **Sentry**: Error tracking with release health
+- **OpenTelemetry**: Distributed tracing across all services
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
 
 ## Contributing
 
@@ -281,6 +311,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 3. Commit changes (`git commit -m 'Add amazing feature'`)
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+---
 
 ## Contact
 
