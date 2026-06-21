@@ -59,6 +59,7 @@
   },
   "investigate": {
     "title": "Investigate",
-    "sessions": "Sessions"
+    "sessions": "Sessions",
+    "sessionsTitle": "Analysis Sessions"
   }
 }
