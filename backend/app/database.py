@@ -105,5 +105,9 @@ def init_db():
     from app.models.shadow_prediction import ShadowPrediction  # noqa: F401
     from app.models.billing import Plan, Subscription, UsageLedger, UsageEvent  # noqa: F401
     from app.models.sso import SSOConfig  # noqa: F401
+    from app.services.integration.webhook_dispatcher import WebhookSubscription  # noqa: F401
+    from app.services.governance.change_mgmt import ChangeRecord  # noqa: F401
+    from app.models.auth import Role, UserRole  # noqa: F401
+    from app.models.compliance import DataAsset  # noqa: F401
 
     Base.metadata.create_all(bind=sync_engine)
